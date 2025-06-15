@@ -235,23 +235,29 @@ def game():
         return redirect(url_for('index'))
 
     conn = get_db_connection()
-    game = conn.execute('''
+    game_row = conn.execute('''
                         SELECT g.*, q.question
                         FROM games g
                                  JOIN questions q ON g.current_question_id = q.id
                         WHERE g.id = ?
                         ''', (session['game_id'],)).fetchone()
 
-    if not game:
+    if not game_row:
         return redirect(url_for('index'))
 
+    # Convert Row object to dictionary
+    game = dict(game_row)
+
     # Get answers for current question
-    answers = conn.execute('''
+    answers_rows = conn.execute('''
                            SELECT *
                            FROM answers
                            WHERE question_id = ?
                            ORDER BY points DESC
                            ''', (game['current_question_id'],)).fetchall()
+
+    # Convert Row objects to dictionaries
+    answers = [dict(answer) for answer in answers_rows]
 
     conn.close()
 
@@ -412,14 +418,14 @@ def game_data():
         return jsonify({'error': 'No active game'}), 400
 
     conn = get_db_connection()
-    game = conn.execute('''
+    game_row = conn.execute('''
                         SELECT g.*, q.question
                         FROM games g
                                  JOIN questions q ON g.current_question_id = q.id
                         WHERE g.id = ?
                         ''', (session['game_id'],)).fetchone()
 
-    answers = conn.execute('''
+    answers_rows = conn.execute('''
                            SELECT *
                            FROM answers
                            WHERE question_id = ?
@@ -428,9 +434,13 @@ def game_data():
 
     conn.close()
 
+    # Convert Row objects to dictionaries for JSON serialization
+    game = dict(game_row)
+    answers = [dict(answer) for answer in answers_rows]
+
     return jsonify({
-        'game': dict(game),
-        'answers': [dict(answer) for answer in answers]
+        'game': game,
+        'answers': answers
     })
 
 
