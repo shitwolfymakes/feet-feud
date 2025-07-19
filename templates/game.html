@@ -109,7 +109,6 @@ async function loadGameData() {
         console.log('Game data loaded:', gameData);
     } catch (error) {
         console.error('Error loading game data:', error);
-        showMessage('Error loading game data. Please refresh the page.', 'danger');
     }
 }
 
@@ -150,11 +149,9 @@ function revealAnswer(answerElement) {
         isStealMode = false;
         document.getElementById('steal-section').style.display = 'none';
         document.getElementById('steal-btn').disabled = true;
-        showMessage('🎉 Successful steal! Points awarded to stealing team!', 'success');
     } else {
         // Add points to round total
         updateRoundPoints(gameData.game.round_points + points);
-        showMessage(`✅ Correct! +${points} points added to round total!`, 'success');
     }
 }
 
@@ -170,8 +167,6 @@ function addStrike() {
     
     if (gameData.game.strikes >= 3) {
         showStealOpportunity();
-    } else {
-        showMessage(`❌ Strike ${gameData.game.strikes}/3 added!`, 'danger');
     }
     
     // Send update to server
@@ -185,7 +180,6 @@ function addStrike() {
     })
     .catch(error => {
         console.error('Error adding strike:', error);
-        showMessage('Error adding strike. Please try again.', 'danger');
     });
 }
 
@@ -203,8 +197,6 @@ function switchTeam() {
     updateStrikes(0);
     updateRoundPoints(0);
     
-    showMessage(`🔄 Switched to ${getCurrentTeamName()}!`, 'success');
-    
     // Send update to server
     fetch('/switch_team', {
         method: 'POST',
@@ -216,7 +208,6 @@ function switchTeam() {
     })
     .catch(error => {
         console.error('Error switching team:', error);
-        showMessage('Error switching team. Please try again.', 'danger');
     });
 }
 
@@ -224,18 +215,15 @@ function showStealOpportunity() {
     document.getElementById('steal-section').style.display = 'block';
     document.getElementById('steal-btn').disabled = false;
     isStealMode = false; // Will be set to true when steal button is clicked
-    showMessage('🚨 3 strikes! Other team can now attempt to steal!', 'warning');
 }
 
 function awardSteal() {
     console.log('awardSteal called'); // Debug log
     if (gameData.game.strikes < 3) {
-        showMessage('❌ Cannot steal - less than 3 strikes!', 'danger');
         return;
     }
     
     isStealMode = true;
-    showMessage('🎯 Steal mode activated! Click a correct answer to award steal, or add strike if they fail.', 'warning');
 }
 
 function awardPointsToStealingTeam() {
@@ -269,7 +257,6 @@ function awardPointsToStealingTeam() {
     })
     .catch(error => {
         console.error('Error awarding steal:', error);
-        showMessage('Error awarding steal. Please try again.', 'danger');
     });
 }
 
@@ -297,7 +284,6 @@ function awardRoundPoints() {
         })
         .catch(error => {
             console.error('Error awarding points:', error);
-            showMessage('Error awarding points. Please try again.', 'danger');
         });
     }
 }
@@ -384,8 +370,6 @@ function resetRound() {
     document.getElementById('steal-section').style.display = 'none';
     document.getElementById('steal-btn').disabled = true;
     
-    showMessage('🔄 Round reset! All answers hidden.', 'success');
-    
     // Send to server
     fetch('/reset_round', {
         method: 'POST',
@@ -397,7 +381,6 @@ function resetRound() {
     })
     .catch(error => {
         console.error('Error resetting round:', error);
-        showMessage('Error resetting round. Please try again.', 'danger');
     });
 }
 
@@ -419,7 +402,6 @@ function nextRound() {
     })
     .catch(error => {
         console.error('Error:', error);
-        showMessage('Error starting next round. Please try again.', 'danger');
     });
 }
 
