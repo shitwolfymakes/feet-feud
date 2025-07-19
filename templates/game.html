@@ -7,7 +7,7 @@
         <h3>{{ game.team1_name }}</h3>
         <div style="font-size: 2rem; font-weight: bold;">{{ game.team1_score }}</div>
     </div>
-
+    
     <div class="card" style="text-align: center; min-width: 150px;">
         <h4>Round Points</h4>
         <div style="font-size: 1.5rem; color: #ffd700;">{{ game.round_points }}</div>
@@ -19,7 +19,7 @@
             </span>
         </div>
     </div>
-
+    
     <div class="card" style="text-align: center; background: linear-gradient(45deg, #4834d4, #686de0);">
         <h3>{{ game.team2_name }}</h3>
         <div style="font-size: 2rem; font-weight: bold;">{{ game.team2_score }}</div>
@@ -41,26 +41,34 @@
     <h3 style="text-align: center; margin-bottom: 20px; color: #74b9ff;">Survey Says...</h3>
     <div id="answer-board" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
         {% for answer in answers %}
-        <div class="answer-slot" data-answer-id="{{ answer.id }}"
-             style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;
+        <div class="answer-slot" data-answer-id="{{ answer.id }}" data-points="{{ answer.points }}"
+             onclick="revealAnswer(this)"
+             style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; 
                     display: flex; justify-content: space-between; align-items: center;
-                    border: 2px solid transparent; transition: all 0.3s ease;">
+                    border: 2px solid rgba(255,255,255,0.3); transition: all 0.3s ease;
+                    cursor: pointer; min-height: 60px;">
             <span class="answer-text" style="font-weight: bold; display: none;">{{ answer.answer }}</span>
             <span class="answer-points" style="color: #ffd700; font-weight: bold; display: none;">{{ answer.points }}</span>
-            <span class="answer-placeholder" style="color: #ddd;">Hidden Answer</span>
+            <span class="answer-placeholder" style="color: #ddd; font-size: 1.2rem; width: 100%; text-align: center;">
+                Click to Reveal Answer {{ loop.index }}
+            </span>
         </div>
         {% endfor %}
     </div>
 </div>
 
-<!-- Input Section -->
-<div class="card" id="guess-section">
-    <div style="display: flex; gap: 15px; align-items: center; max-width: 600px; margin: 0 auto;">
-        <input type="text" id="guess-input" placeholder="Enter your guess..."
-               style="flex: 1; padding: 15px; border: none; border-radius: 25px;
-                      font-size: 1.1rem; background: rgba(255,255,255,0.9); color: #333;">
-        <button onclick="submitGuess()" class="btn" style="padding: 15px 25px; white-space: nowrap;">
-            Submit Guess
+<!-- Game Controls -->
+<div class="card" style="text-align: center;">
+    <h3 style="color: #74b9ff; margin-bottom: 20px;">Host Controls</h3>
+    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <button onclick="addStrike()" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
+            ❌ Add Strike
+        </button>
+        <button onclick="switchTeam()" class="btn btn-secondary">
+            🔄 Switch Team
+        </button>
+        <button onclick="awardSteal()" class="btn" style="background: linear-gradient(45deg, #f39c12, #e67e22);" id="steal-btn" disabled>
+            🎯 Award Steal
         </button>
     </div>
 </div>
@@ -68,24 +76,19 @@
 <!-- Steal Section (Hidden by default) -->
 <div class="card" id="steal-section" style="display: none; text-align: center; background: rgba(241, 196, 15, 0.2);">
     <h3 style="color: #f1c40f; margin-bottom: 15px;">🚨 STEAL OPPORTUNITY! 🚨</h3>
-    <p style="margin-bottom: 20px;">The other team can now try to steal all the points!</p>
-    <div style="display: flex; gap: 15px; align-items: center; max-width: 600px; margin: 0 auto;">
-        <input type="text" id="steal-input" placeholder="Enter your steal guess..."
-               style="flex: 1; padding: 15px; border: none; border-radius: 25px;
-                      font-size: 1.1rem; background: rgba(255,255,255,0.9); color: #333;">
-        <button onclick="submitSteal()" class="btn" style="background: linear-gradient(45deg, #f39c12, #e67e22);">
-            Steal!
-        </button>
-    </div>
+    <p style="margin-bottom: 20px;">Click "Award Steal" if the other team gives a correct answer, or add a strike if they fail!</p>
 </div>
 
-<!-- Game Controls -->
+<!-- Round Controls -->
 <div class="card" style="text-align: center;">
     <button onclick="nextRound()" class="btn btn-secondary" style="margin-right: 10px;">
-        Next Round
+        🎲 Next Round
     </button>
-    <a href="/" class="btn" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d);">
-        End Game
+    <button onclick="resetRound()" class="btn" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); margin-right: 10px;">
+        🔄 Reset Round
+    </button>
+    <a href="/" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
+        🏁 End Game
     </a>
 </div>
 
@@ -94,111 +97,326 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-let gameData = {
-    game: {{ game | tojson }},
-    answers: {{ answers | tojson }}
-};
+let gameData = null;
+let revealedAnswers = new Set();
+let isStealMode = false;
 
-document.getElementById('guess-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        submitGuess();
+// Load game data from server
+async function loadGameData() {
+    try {
+        const response = await fetch('/game_data_json');
+        gameData = await response.json();
+        console.log('Game data loaded:', gameData);
+    } catch (error) {
+        console.error('Error loading game data:', error);
+        showMessage('Error loading game data. Please refresh the page.', 'danger');
     }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadGameData();
+    console.log('Game script loaded successfully');
 });
 
-document.getElementById('steal-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        submitSteal();
-    }
-});
-
-function submitGuess() {
-    const guessInput = document.getElementById('guess-input');
-    const guess = guessInput.value.trim();
-
-    if (!guess) {
-        showMessage('Please enter a guess!', 'warning');
+function revealAnswer(answerElement) {
+    if (!gameData) {
+        console.error('Game data not loaded yet');
         return;
     }
+    
+    const answerId = answerElement.getAttribute('data-answer-id');
+    const points = parseInt(answerElement.getAttribute('data-points'));
+    
+    // Don't reveal if already revealed
+    if (revealedAnswers.has(answerId)) {
+        return;
+    }
+    
+    // Reveal the answer
+    answerElement.querySelector('.answer-text').style.display = 'block';
+    answerElement.querySelector('.answer-points').style.display = 'block';
+    answerElement.querySelector('.answer-placeholder').style.display = 'none';
+    answerElement.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
+    answerElement.style.border = '2px solid #ffd700';
+    answerElement.style.cursor = 'default';
+    
+    revealedAnswers.add(answerId);
+    
+    // Add points to current team
+    if (isStealMode) {
+        // Award all round points to stealing team
+        awardPointsToStealingTeam();
+        isStealMode = false;
+        document.getElementById('steal-section').style.display = 'none';
+        document.getElementById('steal-btn').disabled = true;
+        showMessage('🎉 Successful steal! Points awarded to stealing team!', 'success');
+    } else {
+        // Add points to round total
+        updateRoundPoints(gameData.game.round_points + points);
+        showMessage(`✅ Correct! +${points} points added to round total!`, 'success');
+    }
+}
 
-    fetch('/guess', {
+function addStrike() {
+    if (!gameData) {
+        console.error('Game data not loaded yet');
+        return;
+    }
+    
+    console.log('addStrike called'); // Debug log
+    gameData.game.strikes++;
+    updateStrikes(gameData.game.strikes);
+    
+    if (gameData.game.strikes >= 3) {
+        showStealOpportunity();
+    } else {
+        showMessage(`❌ Strike ${gameData.game.strikes}/3 added!`, 'danger');
+    }
+    
+    // Send update to server
+    fetch('/add_strike', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({guess: guess})
+        headers: { 'Content-Type': 'application/json' }
     })
     .then(response => response.json())
     .then(data => {
-        guessInput.value = '';
-
-        if (data.correct) {
-            showMessage(`✅ Correct! "${data.answer}" - ${data.points} points!`, 'success');
-            revealAnswer(data.answer);
-            updateRoundPoints(data.round_points);
-        } else {
-            showMessage(`❌ Sorry, that's not on the board!`, 'danger');
-            updateStrikes(data.strikes);
-
-            if (data.steal_opportunity) {
-                showStealSection();
-            }
-        }
+        console.log('Strike added successfully:', data);
     })
     .catch(error => {
-        console.error('Error:', error);
-        showMessage('Error submitting guess. Please try again.', 'danger');
+        console.error('Error adding strike:', error);
+        showMessage('Error adding strike. Please try again.', 'danger');
     });
 }
 
-function submitSteal() {
-    const stealInput = document.getElementById('steal-input');
-    const guess = stealInput.value.trim();
-
-    if (!guess) {
-        showMessage('Please enter a steal guess!', 'warning');
-        return;
-    }
-
-    fetch('/steal', {
+function switchTeam() {
+    console.log('switchTeam called'); // Debug log
+    // Award current round points to current team
+    awardRoundPoints();
+    
+    // Switch teams
+    gameData.game.current_team = gameData.game.current_team === 1 ? 2 : 1;
+    gameData.game.strikes = 0;
+    gameData.game.round_points = 0;
+    
+    updateCurrentTeam();
+    updateStrikes(0);
+    updateRoundPoints(0);
+    
+    showMessage(`🔄 Switched to ${getCurrentTeamName()}!`, 'success');
+    
+    // Send update to server
+    fetch('/switch_team', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({guess: guess})
+        headers: { 'Content-Type': 'application/json' }
     })
     .then(response => response.json())
     .then(data => {
-        stealInput.value = '';
-        document.getElementById('steal-section').style.display = 'none';
-        document.getElementById('guess-section').style.display = 'block';
-
-        if (data.successful) {
-            showMessage(`🎉 Successful steal! ${data.points_stolen} points stolen!`, 'success');
-        } else {
-            showMessage(`❌ Steal failed! Original team keeps their points.`, 'danger');
-        }
-
-        // Refresh game data
-        refreshGameData();
+        console.log('Team switched successfully:', data);
     })
     .catch(error => {
-        console.error('Error:', error);
-        showMessage('Error submitting steal. Please try again.', 'danger');
+        console.error('Error switching team:', error);
+        showMessage('Error switching team. Please try again.', 'danger');
     });
+}
+
+function showStealOpportunity() {
+    document.getElementById('steal-section').style.display = 'block';
+    document.getElementById('steal-btn').disabled = false;
+    isStealMode = false; // Will be set to true when steal button is clicked
+    showMessage('🚨 3 strikes! Other team can now attempt to steal!', 'warning');
+}
+
+function awardSteal() {
+    console.log('awardSteal called'); // Debug log
+    if (gameData.game.strikes < 3) {
+        showMessage('❌ Cannot steal - less than 3 strikes!', 'danger');
+        return;
+    }
+    
+    isStealMode = true;
+    showMessage('🎯 Steal mode activated! Click a correct answer to award steal, or add strike if they fail.', 'warning');
+}
+
+function awardPointsToStealingTeam() {
+    const stealingTeam = gameData.game.current_team === 1 ? 2 : 1;
+    const points = gameData.game.round_points;
+    
+    if (stealingTeam === 1) {
+        gameData.game.team1_score += points;
+    } else {
+        gameData.game.team2_score += points;
+    }
+    
+    // Update display
+    updateScores();
+    
+    // Reset round
+    gameData.game.strikes = 0;
+    gameData.game.round_points = 0;
+    updateStrikes(0);
+    updateRoundPoints(0);
+    
+    // Send to server
+    fetch('/award_steal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stealing_team: stealingTeam, points: points })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Steal awarded successfully:', data);
+    })
+    .catch(error => {
+        console.error('Error awarding steal:', error);
+        showMessage('Error awarding steal. Please try again.', 'danger');
+    });
+}
+
+function awardRoundPoints() {
+    if (gameData.game.round_points > 0) {
+        if (gameData.game.current_team === 1) {
+            gameData.game.team1_score += gameData.game.round_points;
+        } else {
+            gameData.game.team2_score += gameData.game.round_points;
+        }
+        updateScores();
+        
+        // Send to server
+        fetch('/award_points', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                team: gameData.game.current_team, 
+                points: gameData.game.round_points 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Points awarded successfully:', data);
+        })
+        .catch(error => {
+            console.error('Error awarding points:', error);
+            showMessage('Error awarding points. Please try again.', 'danger');
+        });
+    }
+}
+
+function updateScores() {
+    const team1ScoreElements = document.querySelectorAll('[style*="font-size: 2rem; font-weight: bold;"]');
+    if (team1ScoreElements[0]) team1ScoreElements[0].textContent = gameData.game.team1_score;
+    if (team1ScoreElements[1]) team1ScoreElements[1].textContent = gameData.game.team2_score;
+}
+
+function updateCurrentTeam() {
+    const currentTeamElement = document.getElementById('current-team');
+    if (currentTeamElement) {
+        currentTeamElement.textContent = getCurrentTeamName();
+    }
+}
+
+function getCurrentTeamName() {
+    return gameData.game.current_team === 1 ? gameData.game.team1_name : gameData.game.team2_name;
+}
+
+function updateRoundPoints(points) {
+    gameData.game.round_points = points;
+    const roundPointsElement = document.querySelector('[style*="font-size: 1.5rem; color: #ffd700;"]');
+    if (roundPointsElement) {
+        roundPointsElement.textContent = points;
+    }
+    
+    // Send update to server
+    fetch('/update_round_points', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points: points })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Round points updated:', data);
+    })
+    .catch(error => {
+        console.error('Error updating round points:', error);
+    });
+}
+
+function updateStrikes(strikes) {
+    gameData.game.strikes = strikes;
+    const strikesDisplay = document.getElementById('strikes-display');
+    let strikesHtml = '';
+    for (let i = 0; i < strikes; i++) {
+        strikesHtml += '❌';
+    }
+    for (let i = strikes; i < 3; i++) {
+        strikesHtml += '⭕';
+    }
+    strikesDisplay.innerHTML = strikesHtml;
+    
+    // Hide steal section if strikes reset
+    if (strikes < 3) {
+        document.getElementById('steal-section').style.display = 'none';
+        document.getElementById('steal-btn').disabled = true;
+        isStealMode = false;
+    }
+}
+
+function resetRound() {
+    console.log('resetRound called'); // Debug log
+    if (confirm('Reset this round? This will hide all revealed answers and reset strikes/points.')) {
+        // Hide all revealed answers
+        document.querySelectorAll('.answer-slot').forEach(slot => {
+            slot.querySelector('.answer-text').style.display = 'none';
+            slot.querySelector('.answer-points').style.display = 'none';
+            slot.querySelector('.answer-placeholder').style.display = 'block';
+            slot.style.background = 'rgba(255,255,255,0.1)';
+            slot.style.border = '2px solid rgba(255,255,255,0.3)';
+            slot.style.cursor = 'pointer';
+        });
+        
+        // Reset game state
+        revealedAnswers.clear();
+        gameData.game.strikes = 0;
+        gameData.game.round_points = 0;
+        isStealMode = false;
+        
+        updateStrikes(0);
+        updateRoundPoints(0);
+        document.getElementById('steal-section').style.display = 'none';
+        document.getElementById('steal-btn').disabled = true;
+        
+        showMessage('🔄 Round reset! All answers hidden.', 'success');
+        
+        // Send to server
+        fetch('/reset_round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Round reset successfully:', data);
+        })
+        .catch(error => {
+            console.error('Error resetting round:', error);
+            showMessage('Error resetting round. Please try again.', 'danger');
+        });
+    }
 }
 
 function nextRound() {
-    if (confirm('Are you sure you want to start the next round? This will reset the current question.')) {
+    console.log('nextRound called'); // Debug log
+    if (confirm('Start next round? This will award current points and load a new question.')) {
+        // Award any remaining points
+        awardRoundPoints();
+        
         fetch('/next_round', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
+            headers: { 'Content-Type': 'application/json' }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                console.log('Next round started, reloading page');
                 location.reload(); // Reload page for new question
             }
         })
@@ -209,78 +427,39 @@ function nextRound() {
     }
 }
 
-function revealAnswer(answerText) {
-    const answerSlots = document.querySelectorAll('.answer-slot');
-    answerSlots.forEach(slot => {
-        const textElement = slot.querySelector('.answer-text');
-        if (textElement && textElement.textContent.toLowerCase() === answerText.toLowerCase()) {
-            textElement.style.display = 'block';
-            slot.querySelector('.answer-points').style.display = 'block';
-            slot.querySelector('.answer-placeholder').style.display = 'none';
-            slot.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
-            slot.style.border = '2px solid #ffd700';
-        }
-    });
-}
-
-function updateRoundPoints(points) {
-    const roundPointsElement = document.querySelector('[style*="font-size: 1.5rem; color: #ffd700;"]');
-    if (roundPointsElement) {
-        roundPointsElement.textContent = points;
-    }
-}
-
-function updateStrikes(strikes) {
-    const strikesDisplay = document.getElementById('strikes-display');
-    let strikesHtml = '';
-    for (let i = 0; i < strikes; i++) {
-        strikesHtml += '❌';
-    }
-    for (let i = strikes; i < 3; i++) {
-        strikesHtml += '⭕';
-    }
-    strikesDisplay.innerHTML = strikesHtml;
-}
-
-function showStealSection() {
-    document.getElementById('guess-section').style.display = 'none';
-    document.getElementById('steal-section').style.display = 'block';
-    document.getElementById('steal-input').focus();
-}
-
-function refreshGameData() {
-    fetch('/game_data')
-    .then(response => response.json())
-    .then(data => {
-        gameData = data;
-        // Update scores
-        location.reload(); // Simple approach - reload the page
-    })
-    .catch(error => console.error('Error refreshing game data:', error));
-}
-
 function showMessage(message, type) {
     const messageArea = document.getElementById('message-area');
     const messageDiv = document.createElement('div');
     messageDiv.className = `alert alert-${type}`;
     messageDiv.textContent = message;
-
+    
     messageArea.appendChild(messageDiv);
-
-    // Auto-remove message after 5 seconds
+    
+    // Auto-remove message after 4 seconds
     setTimeout(() => {
         if (messageDiv.parentNode) {
             messageDiv.parentNode.removeChild(messageDiv);
         }
-    }, 5000);
-
+    }, 4000);
+    
     // Scroll to message
     messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Focus on input when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('guess-input').focus();
-});
-</script>
+// Debug: Log when script loads
+console.log('Game script loaded successfully');
+
+// Test function to verify JavaScript is working
+window.testFunction = function() {
+    console.log('Test function called - JavaScript is working!');
+    showMessage('JavaScript is working!', 'success');
+};
+
+// Make functions globally available for onclick handlers
+window.revealAnswer = revealAnswer;
+window.addStrike = addStrike;
+window.switchTeam = switchTeam;
+window.awardSteal = awardSteal;
+window.resetRound = resetRound;
+window.nextRound = nextRound;
 {% endblock %}

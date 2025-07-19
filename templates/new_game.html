@@ -4,6 +4,12 @@
 <div class="card">
     <h2 style="text-align: center; color: #ffd700; margin-bottom: 30px;">Setup New Game</h2>
 
+    {% if error %}
+    <div class="alert alert-danger" style="text-align: center; margin-bottom: 20px;">
+        {{ error }}
+    </div>
+    {% endif %}
+
     <form method="POST" style="max-width: 500px; margin: 0 auto;">
         <div class="form-group">
             <label for="team1_name">🔥 Team 1 Name:</label>
@@ -48,26 +54,24 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-    // Auto-focus first input
-    document.getElementById('team1_name').focus();
+// Auto-focus first input
+document.getElementById('team1_name').focus();
 
-    // Form validation
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const team1 = document.getElementById('team1_name').value.trim();
-        const team2 = document.getElementById('team2_name').value.trim();
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const team1 = document.getElementById('team1_name').value.trim();
+    const team2 = document.getElementById('team2_name').value.trim();
 
-        if (team1.length < 2 || team2.length < 2) {
-            e.preventDefault();
-            alert('Team names must be at least 2 characters long!');
-            return;
-        }
+    if (team1.length < 2 || team2.length < 2) {
+        e.preventDefault();
+        alert('Team names must be at least 2 characters long!');
+        return;
+    }
 
-        if (team1.toLowerCase() === team2.toLowerCase()) {
-            e.preventDefault();
-            alert('Team names must be different!');
-            return;
-        }
-    });
-</script>
+    if (team1.toLowerCase() === team2.toLowerCase()) {
+        e.preventDefault();
+        alert('Team names must be different!');
+        return;
+    }
+});
 {% endblock %}
