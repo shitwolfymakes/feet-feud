@@ -363,68 +363,64 @@ function updateStrikes(strikes) {
 
 function resetRound() {
     console.log('resetRound called'); // Debug log
-    if (confirm('Reset this round? This will hide all revealed answers and reset strikes/points.')) {
-        // Hide all revealed answers
-        document.querySelectorAll('.answer-slot').forEach(slot => {
-            slot.querySelector('.answer-text').style.display = 'none';
-            slot.querySelector('.answer-points').style.display = 'none';
-            slot.querySelector('.answer-placeholder').style.display = 'block';
-            slot.style.background = 'rgba(255,255,255,0.1)';
-            slot.style.border = '2px solid rgba(255,255,255,0.3)';
-            slot.style.cursor = 'pointer';
-        });
-        
-        // Reset game state
-        revealedAnswers.clear();
-        gameData.game.strikes = 0;
-        gameData.game.round_points = 0;
-        isStealMode = false;
-        
-        updateStrikes(0);
-        updateRoundPoints(0);
-        document.getElementById('steal-section').style.display = 'none';
-        document.getElementById('steal-btn').disabled = true;
-        
-        showMessage('🔄 Round reset! All answers hidden.', 'success');
-        
-        // Send to server
-        fetch('/reset_round', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Round reset successfully:', data);
-        })
-        .catch(error => {
-            console.error('Error resetting round:', error);
-            showMessage('Error resetting round. Please try again.', 'danger');
-        });
-    }
+    // Hide all revealed answers
+    document.querySelectorAll('.answer-slot').forEach(slot => {
+        slot.querySelector('.answer-text').style.display = 'none';
+        slot.querySelector('.answer-points').style.display = 'none';
+        slot.querySelector('.answer-placeholder').style.display = 'block';
+        slot.style.background = 'rgba(255,255,255,0.1)';
+        slot.style.border = '2px solid rgba(255,255,255,0.3)';
+        slot.style.cursor = 'pointer';
+    });
+    
+    // Reset game state
+    revealedAnswers.clear();
+    gameData.game.strikes = 0;
+    gameData.game.round_points = 0;
+    isStealMode = false;
+    
+    updateStrikes(0);
+    updateRoundPoints(0);
+    document.getElementById('steal-section').style.display = 'none';
+    document.getElementById('steal-btn').disabled = true;
+    
+    showMessage('🔄 Round reset! All answers hidden.', 'success');
+    
+    // Send to server
+    fetch('/reset_round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Round reset successfully:', data);
+    })
+    .catch(error => {
+        console.error('Error resetting round:', error);
+        showMessage('Error resetting round. Please try again.', 'danger');
+    });
 }
 
 function nextRound() {
     console.log('nextRound called'); // Debug log
-    if (confirm('Start next round? This will award current points and load a new question.')) {
-        // Award any remaining points
-        awardRoundPoints();
-        
-        fetch('/next_round', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Next round started, reloading page');
-                location.reload(); // Reload page for new question
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showMessage('Error starting next round. Please try again.', 'danger');
-        });
-    }
+    // Award any remaining points
+    awardRoundPoints();
+    
+    fetch('/next_round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Next round started, reloading page');
+            location.reload(); // Reload page for new question
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error starting next round. Please try again.', 'danger');
+    });
 }
 
 function showMessage(message, type) {
