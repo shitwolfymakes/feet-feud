@@ -122,10 +122,12 @@
 </head>
 <body>
     <div class="container">
+        {% block header_section %}
         <div class="header">
             <h1>🎯 FAMILY FEUD 🎯</h1>
             {% block header %}{% endblock %}
         </div>
+        {% endblock %}
 
         <main>
             {% block content %}{% endblock %}

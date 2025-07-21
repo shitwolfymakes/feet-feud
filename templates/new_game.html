@@ -1,77 +1,170 @@
 {% extends "base.html" %}
 
+{% block header_section %}{% endblock %}
+
 {% block content %}
-<div class="card">
-    <h2 style="text-align: center; color: #ffd700; margin-bottom: 30px;">Setup New Game</h2>
-
-    {% if error %}
-    <div class="alert alert-danger" style="text-align: center; margin-bottom: 20px;">
-        {{ error }}
+<div class="card" style="text-align: center; padding: 40px;">
+    <!-- Logo -->
+    <div style="margin-bottom: 30px;">
+        <img src="{{ url_for('static', filename='assets/logo.png') }}" 
+             alt="Family Feud Logo" 
+             style="max-width: 400px; width: 100%; height: auto; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));">
     </div>
-    {% endif %}
 
-    <form method="POST" style="max-width: 500px; margin: 0 auto;">
-        <div class="form-group">
-            <label for="team1_name">🔥 Team 1 Name:</label>
-            <input type="text" id="team1_name" name="team1_name" required
-                   placeholder="Enter first team name" maxlength="50">
+    <!-- Teams Display -->
+    <div style="margin: 40px 0;">
+        <h2 style="color: #74b9ff; margin-bottom: 30px;">Tonight's Matchup</h2>
+        <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div style="background: linear-gradient(45deg, #ff6b6b, #ee5a24); padding: 30px 40px; border-radius: 20px; 
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.3); transform: perspective(1000px) rotateY(-5deg);">
+                <h2 style="margin: 0; font-size: 2.5rem;">🦶 Left Foot</h2>
+            </div>
+            <div style="font-size: 3rem; color: #ffd700; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">VS</div>
+            <div style="background: linear-gradient(45deg, #4834d4, #686de0); padding: 30px 40px; border-radius: 20px; 
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.3); transform: perspective(1000px) rotateY(5deg);">
+                <h2 style="margin: 0; font-size: 2.5rem;">🦶 Right Foot</h2>
+            </div>
         </div>
+    </div>
 
-        <div class="form-group">
-            <label for="team2_name">⚡ Team 2 Name:</label>
-            <input type="text" id="team2_name" name="team2_name" required
-                   placeholder="Enter second team name" maxlength="50">
-        </div>
-
-        <div style="text-align: center; margin-top: 30px;">
-            <button type="submit" class="btn" style="font-size: 1.2rem; padding: 15px 30px;">
-                🚀 Start Game!
-            </button>
-            <a href="/" class="btn btn-secondary" style="margin-left: 10px;">
-                ← Back to Home
-            </a>
-        </div>
+    <!-- Start Button -->
+    <form method="POST" style="margin-top: 40px;">
+        <button type="submit" class="btn pulse-animation" 
+                style="font-size: 1.5rem; padding: 20px 50px; background: linear-gradient(45deg, #2ecc71, #27ae60);">
+            🎮 START GAME
+        </button>
     </form>
 </div>
 
-<div class="card" style="text-align: center;">
-    <h3 style="color: #74b9ff; margin-bottom: 15px;">Game Rules Reminder</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-        <div>
-            <h4 style="color: #ffd700;">Round Structure</h4>
-            <p>Teams take turns guessing answers to survey questions</p>
+<!-- Game Rules -->
+<div class="card" style="background: rgba(255,255,255,0.05);">
+    <h3 style="text-align: center; color: #ffd700; margin-bottom: 25px; font-size: 1.8rem;">
+        🏆 How to Play Family Feud 🏆
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 1400px; margin: 0 auto;">
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.3);">
+            <h4 style="color: #ffd700; margin-bottom: 10px;">📋 Survey Questions</h4>
+            <p style="line-height: 1.6;">We asked 100 people... Teams try to guess the most popular answers!</p>
         </div>
-        <div>
-            <h4 style="color: #ffd700;">Scoring</h4>
-            <p>Points based on how many people gave that answer</p>
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.3);">
+            <h4 style="color: #ffd700; margin-bottom: 10px;">💯 Scoring Points</h4>
+            <p style="line-height: 1.6;">Each answer is worth points based on how many people said it</p>
         </div>
-        <div>
-            <h4 style="color: #ffd700;">Strikes</h4>
-            <p>3 wrong answers = opportunity for other team to steal</p>
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.3);">
+            <h4 style="color: #ffd700; margin-bottom: 10px;">❌ Three Strikes</h4>
+            <p style="line-height: 1.6;">Get 3 wrong answers and the other team can steal all the points!</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.3);">
+            <h4 style="color: #ffd700; margin-bottom: 10px;">🎯 Win the Round</h4>
+            <p style="line-height: 1.6;">Find all answers or have the most points when time runs out</p>
         </div>
     </div>
 </div>
+
+<!-- Audio player (hidden) -->
+<audio id="intro-music" autoplay loop>
+    <source src="{{ url_for('static', filename='assets/intro-family-feud.mp3') }}" type="audio/mpeg">
+</audio>
+
+<style>
+/* Pulse animation for start button */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+.pulse-animation:hover {
+    animation: none;
+    transform: scale(1.1) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    div[style*="font-size: 2.5rem"] h2 {
+        font-size: 1.8rem !important;
+    }
+    div[style*="font-size: 3rem"] {
+        font-size: 2rem !important;
+    }
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
-// Auto-focus first input
-document.getElementById('team1_name').focus();
-
-// Form validation
-document.querySelector('form').addEventListener('submit', function(e) {
-    const team1 = document.getElementById('team1_name').value.trim();
-    const team2 = document.getElementById('team2_name').value.trim();
-
-    if (team1.length < 2 || team2.length < 2) {
-        e.preventDefault();
-        alert('Team names must be at least 2 characters long!');
-        return;
+// Initialize audio with user controls
+document.addEventListener('DOMContentLoaded', function() {
+    const audio = document.getElementById('intro-music');
+    
+    // Set volume to a reasonable level
+    if (audio) {
+        audio.volume = 0.3;
     }
+    
+    // Stop music when form is submitted
+    document.querySelector('form').addEventListener('submit', function() {
+        if (audio) {
+            audio.pause();
+        }
+    });
+    
+    // Add keyboard shortcut to start game (Enter key)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            document.querySelector('form').submit();
+        }
+    });
+    
+    // Focus on start button
+    document.querySelector('button[type="submit"]').focus();
+});
 
-    if (team1.toLowerCase() === team2.toLowerCase()) {
-        e.preventDefault();
-        alert('Team names must be different!');
-        return;
-    }
+// Add music controls
+document.addEventListener('DOMContentLoaded', function() {
+    const audio = document.getElementById('intro-music');
+    
+    // Create volume control
+    const volumeControl = document.createElement('div');
+    volumeControl.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 10px; display: flex; align-items: center; gap: 10px;';
+    
+    const muteBtn = document.createElement('button');
+    muteBtn.textContent = '🔊';
+    muteBtn.style.cssText = 'background: none; border: none; font-size: 1.5rem; cursor: pointer; color: white;';
+    muteBtn.onclick = function() {
+        if (audio.muted) {
+            audio.muted = false;
+            muteBtn.textContent = '🔊';
+        } else {
+            audio.muted = true;
+            muteBtn.textContent = '🔇';
+        }
+    };
+    
+    const volumeSlider = document.createElement('input');
+    volumeSlider.type = 'range';
+    volumeSlider.min = '0';
+    volumeSlider.max = '100';
+    volumeSlider.value = '30';
+    volumeSlider.style.cssText = 'width: 100px;';
+    volumeSlider.oninput = function() {
+        audio.volume = this.value / 100;
+    };
+    
+    volumeControl.appendChild(muteBtn);
+    volumeControl.appendChild(volumeSlider);
+    document.body.appendChild(volumeControl);
 });
 {% endblock %}

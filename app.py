@@ -2,9 +2,13 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 import sqlite3
 import random
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'
+
+# Ensure static folder structure exists
+os.makedirs('static/assets', exist_ok=True)
 
 # Database initialization
 def init_db():
@@ -155,11 +159,9 @@ def index():
 def new_game():
     if request.method == 'POST':
         try:
-            team1_name = request.form.get('team1_name', '').strip()
-            team2_name = request.form.get('team2_name', '').strip()
-            
-            if not team1_name or not team2_name:
-                return render_template('new_game.html', error='Both team names are required'), 400
+            # Hardcoded team names
+            team1_name = 'Left Foot'
+            team2_name = 'Right Foot'
             
             conn = get_db_connection()
             cursor = conn.cursor()
