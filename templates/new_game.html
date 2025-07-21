@@ -3,62 +3,39 @@
 {% block header_section %}{% endblock %}
 
 {% block content %}
-<div class="card" style="text-align: center; padding: 40px;">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: calc(100vh - 40px); padding: 20px;">
     <!-- Logo -->
-    <div style="margin-bottom: 30px;">
+    <div style="margin-bottom: 5vh;">
         <img src="{{ url_for('static', filename='assets/logo.png') }}" 
              alt="Family Feud Logo" 
-             style="max-width: 400px; width: 100%; height: auto; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));">
+             style="max-width: 500px; width: 100%; height: auto; max-height: 30vh; object-fit: contain;
+                    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));">
     </div>
 
     <!-- Teams Display -->
-    <div style="margin: 40px 0;">
-        <h2 style="color: #74b9ff; margin-bottom: 30px;">Tonight's Matchup</h2>
-        <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 20px;">
-            <div style="background: linear-gradient(45deg, #ff6b6b, #ee5a24); padding: 30px 40px; border-radius: 20px; 
+    <div style="margin: 5vh 0;">
+        <h2 style="color: #74b9ff; margin-bottom: 4vh; font-size: 2.5rem;">Tonight's Matchup</h2>
+        <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 30px;">
+            <div style="background: linear-gradient(45deg, #ff6b6b, #ee5a24); padding: 3vh 4vw; border-radius: 20px; 
                         box-shadow: 0 5px 15px rgba(0,0,0,0.3); transform: perspective(1000px) rotateY(-5deg);">
-                <h2 style="margin: 0; font-size: 2.5rem;">🦶 Left Foot</h2>
+                <h2 style="margin: 0; font-size: 3rem;">🦶 Left Foot</h2>
             </div>
-            <div style="font-size: 3rem; color: #ffd700; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">VS</div>
-            <div style="background: linear-gradient(45deg, #4834d4, #686de0); padding: 30px 40px; border-radius: 20px; 
+            <div style="font-size: 4rem; color: #ffd700; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">VS</div>
+            <div style="background: linear-gradient(45deg, #4834d4, #686de0); padding: 3vh 4vw; border-radius: 20px; 
                         box-shadow: 0 5px 15px rgba(0,0,0,0.3); transform: perspective(1000px) rotateY(5deg);">
-                <h2 style="margin: 0; font-size: 2.5rem;">🦶 Right Foot</h2>
+                <h2 style="margin: 0; font-size: 3rem;">🦶 Right Foot</h2>
             </div>
         </div>
     </div>
 
     <!-- Start Button -->
-    <form method="POST" style="margin-top: 40px;">
+    <form method="POST" style="margin-top: 5vh;">
         <button type="submit" class="btn pulse-animation" 
-                style="font-size: 1.5rem; padding: 20px 50px; background: linear-gradient(45deg, #2ecc71, #27ae60);">
+                style="font-size: 2rem; padding: 25px 60px; background: linear-gradient(45deg, #2ecc71, #27ae60);">
             🎮 START GAME
         </button>
     </form>
-</div>
-
-<!-- Game Rules -->
-<div class="card" style="background: rgba(255,255,255,0.05);">
-    <h3 style="text-align: center; color: #ffd700; margin-bottom: 25px; font-size: 1.8rem;">
-        🏆 How to Play Family Feud 🏆
-    </h3>
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 1400px; margin: 0 auto;">
-        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.3);">
-            <h4 style="color: #ffd700; margin-bottom: 10px;">📋 Survey Questions</h4>
-            <p style="line-height: 1.6;">We asked 100 people... Teams try to guess the most popular answers!</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.3);">
-            <h4 style="color: #ffd700; margin-bottom: 10px;">💯 Scoring Points</h4>
-            <p style="line-height: 1.6;">Each answer is worth points based on how many people said it</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.3);">
-            <h4 style="color: #ffd700; margin-bottom: 10px;">❌ Three Strikes</h4>
-            <p style="line-height: 1.6;">Get 3 wrong answers and the other team can steal all the points!</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.3);">
-            <h4 style="color: #ffd700; margin-bottom: 10px;">🎯 Win the Round</h4>
-            <p style="line-height: 1.6;">Find all answers or have the most points when time runs out</p>
-        </div>
-    </div>
 </div>
 
 <!-- Audio player (hidden) -->
@@ -94,12 +71,20 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    div[style*="font-size: 2.5rem"] h2 {
-        font-size: 1.8rem !important;
-    }
-    div[style*="font-size: 3rem"] {
+    h2[style*="font-size: 3rem"] {
         font-size: 2rem !important;
     }
+    div[style*="font-size: 4rem"] {
+        font-size: 2.5rem !important;
+    }
+    h2[style*="font-size: 2.5rem"] {
+        font-size: 2rem !important;
+    }
+}
+
+/* Hide scrollbars but keep functionality */
+body {
+    overflow: hidden;
 }
 </style>
 {% endblock %}
