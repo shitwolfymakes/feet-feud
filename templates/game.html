@@ -4,7 +4,7 @@
 <!-- Score Display -->
 <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; margin-bottom: 30px;">
     <div class="card" style="text-align: center; background: linear-gradient(45deg, #ff6b6b, #ee5a24);">
-        <h3>{{ game.team1_name }}</h3>
+        <h3>🦶 {{ game.team1_name }}</h3>
         <div style="font-size: 2rem; font-weight: bold;">{{ game.team1_score }}</div>
     </div>
     
@@ -21,7 +21,7 @@
     </div>
     
     <div class="card" style="text-align: center; background: linear-gradient(45deg, #4834d4, #686de0);">
-        <h3>{{ game.team2_name }}</h3>
+        <h3>🦶 {{ game.team2_name }}</h3>
         <div style="font-size: 2rem; font-weight: bold;">{{ game.team2_score }}</div>
     </div>
 </div>
@@ -41,17 +41,30 @@
     <h3 style="text-align: center; margin-bottom: 20px; color: #74b9ff;">Survey Says...</h3>
     <div id="answer-board" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
         {% for answer in answers %}
-        <div class="answer-slot" data-answer-id="{{ answer.id }}" data-points="{{ answer.points }}"
+        <div class="answer-slot" data-answer-id="{{ answer.id }}"
              onclick="revealAnswer(this)"
-             style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; 
-                    display: flex; justify-content: space-between; align-items: center;
-                    border: 2px solid rgba(255,255,255,0.3); transition: all 0.3s ease;
-                    cursor: pointer; min-height: 60px;">
-            <span class="answer-text" style="font-weight: bold; display: none;">{{ answer.answer }}</span>
-            <span class="answer-points" style="color: #ffd700; font-weight: bold; display: none;">{{ answer.points }}</span>
-            <span class="answer-placeholder" style="color: #ddd; font-size: 1.2rem; width: 100%; text-align: center;">
-                Click to Reveal Answer {{ loop.index }}
-            </span>
+             style="position: relative; height: 80px; perspective: 1000px;">
+            <div class="answer-card" style="position: absolute; width: 100%; height: 100%; 
+                 transform-style: preserve-3d; transition: transform 0.6s;">
+                <!-- Front of card -->
+                <div class="card-front" style="position: absolute; width: 100%; height: 100%;
+                     background: linear-gradient(45deg, #34495e, #2c3e50); 
+                     border: 2px solid rgba(255,255,255,0.3); border-radius: 10px;
+                     display: flex; align-items: center; justify-content: center;
+                     backface-visibility: hidden; cursor: pointer;">
+                    <span style="color: #ffd700; font-size: 2rem; font-weight: bold;">{{ loop.index }}</span>
+                </div>
+                <!-- Back of card (will be populated on reveal) -->
+                <div class="card-back" style="position: absolute; width: 100%; height: 100%;
+                     background: linear-gradient(45deg, #2ecc71, #27ae60); 
+                     border: 2px solid #ffd700; border-radius: 10px;
+                     display: flex; justify-content: space-between; align-items: center;
+                     padding: 15px 20px; transform: rotateX(-180deg);
+                     backface-visibility: hidden;">
+                    <span class="answer-text" style="font-weight: bold; font-size: 1.3rem; color: white;"></span>
+                    <span class="answer-points" style="color: #ffd700; font-weight: bold; font-size: 1.5rem;"></span>
+                </div>
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -119,6 +132,14 @@
     </div>
 </div>
 
+<!-- Audio elements -->
+<audio id="ding-sound" preload="auto">
+    <source src="{{ url_for('static', filename='assets/ding.mp3') }}" type="audio/mpeg">
+</audio>
+<audio id="buzzer-sound" preload="auto">
+    <source src="{{ url_for('static', filename='assets/buzzer.mp3') }}" type="audio/mpeg">
+</audio>
+
 <style>
 @media (max-width: 768px) {
     #question-text-overlay {
@@ -139,6 +160,7 @@
 let gameData = null;
 let revealedAnswers = new Set();
 let isStealMode = false;
+let roundFrozen = false;
 
 // Load game data from server
 async function loadGameData() {
@@ -162,42 +184,74 @@ document.addEventListener('DOMContentLoaded', function() {
             closeQuestionOverlay();
         }
     });
+    
+    // Automatically reveal question on page load (round start)
+    setTimeout(() => {
+        revealQuestion();
+    }, 500);
 });
 
-function revealAnswer(answerElement) {
+async function revealAnswer(answerSlot) {
     if (!gameData) {
         console.error('Game data not loaded yet');
         return;
     }
     
-    const answerId = answerElement.getAttribute('data-answer-id');
-    const points = parseInt(answerElement.getAttribute('data-points'));
+    const answerId = answerSlot.getAttribute('data-answer-id');
     
     // Don't reveal if already revealed
     if (revealedAnswers.has(answerId)) {
         return;
     }
     
-    // Reveal the answer
-    answerElement.querySelector('.answer-text').style.display = 'block';
-    answerElement.querySelector('.answer-points').style.display = 'block';
-    answerElement.querySelector('.answer-placeholder').style.display = 'none';
-    answerElement.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
-    answerElement.style.border = '2px solid #ffd700';
-    answerElement.style.cursor = 'default';
-    
-    revealedAnswers.add(answerId);
-    
-    // Add points to current team
-    if (isStealMode) {
-        // Award all round points to stealing team
-        awardPointsToStealingTeam();
-        isStealMode = false;
-        document.getElementById('steal-section').style.display = 'none';
-        document.getElementById('steal-btn').disabled = true;
-    } else {
-        // Add points to round total
-        updateRoundPoints(gameData.game.round_points + points);
+    // Fetch answer data from server
+    try {
+        const response = await fetch(`/get_answer/${answerId}`);
+        const answerData = await response.json();
+        
+        if (!answerData.success) {
+            console.error('Failed to get answer data');
+            return;
+        }
+        
+        // Populate the back of the card
+        const cardBack = answerSlot.querySelector('.card-back');
+        cardBack.querySelector('.answer-text').textContent = answerData.answer;
+        cardBack.querySelector('.answer-points').textContent = answerData.points;
+        
+        // Flip the card
+        const card = answerSlot.querySelector('.answer-card');
+        card.style.transform = 'rotateX(-180deg)';
+        
+        // Play ding sound
+        const dingSound = document.getElementById('ding-sound');
+        if (dingSound) {
+            dingSound.currentTime = 0;
+            dingSound.play().catch(e => console.log('Audio play failed:', e));
+        }
+        
+        // Mark as revealed
+        revealedAnswers.add(answerId);
+        
+        // Disable further clicks
+        answerSlot.style.pointerEvents = 'none';
+        
+        // Add points if round not frozen
+        if (!roundFrozen) {
+            if (isStealMode) {
+                // Award all round points to stealing team
+                awardPointsToStealingTeam();
+                isStealMode = false;
+                document.getElementById('steal-section').style.display = 'none';
+                document.getElementById('steal-btn').disabled = true;
+            } else {
+                // Add points to round total
+                updateRoundPoints(gameData.game.round_points + answerData.points);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error revealing answer:', error);
     }
 }
 
@@ -207,9 +261,16 @@ function addStrike() {
         return;
     }
     
-    console.log('addStrike called'); // Debug log
+    console.log('addStrike called');
     gameData.game.strikes++;
     updateStrikes(gameData.game.strikes);
+    
+    // Play buzzer sound
+    const buzzerSound = document.getElementById('buzzer-sound');
+    if (buzzerSound) {
+        buzzerSound.currentTime = 0;
+        buzzerSound.play().catch(e => console.log('Audio play failed:', e));
+    }
     
     if (gameData.game.strikes >= 3) {
         showStealOpportunity();
@@ -230,7 +291,7 @@ function addStrike() {
 }
 
 function switchTeam() {
-    console.log('switchTeam called'); // Debug log
+    console.log('switchTeam called');
     // Award current round points to current team
     awardRoundPoints();
     
@@ -260,11 +321,11 @@ function switchTeam() {
 function showStealOpportunity() {
     document.getElementById('steal-section').style.display = 'block';
     document.getElementById('steal-btn').disabled = false;
-    isStealMode = false; // Will be set to true when steal button is clicked
+    isStealMode = false;
 }
 
 function awardSteal() {
-    console.log('awardSteal called'); // Debug log
+    console.log('awardSteal called');
     if (gameData.game.strikes < 3) {
         return;
     }
@@ -394,15 +455,12 @@ function updateStrikes(strikes) {
 }
 
 function resetRound() {
-    console.log('resetRound called'); // Debug log
-    // Hide all revealed answers
+    console.log('resetRound called');
+    // Reset all cards to show numbers
     document.querySelectorAll('.answer-slot').forEach(slot => {
-        slot.querySelector('.answer-text').style.display = 'none';
-        slot.querySelector('.answer-points').style.display = 'none';
-        slot.querySelector('.answer-placeholder').style.display = 'block';
-        slot.style.background = 'rgba(255,255,255,0.1)';
-        slot.style.border = '2px solid rgba(255,255,255,0.3)';
-        slot.style.cursor = 'pointer';
+        const card = slot.querySelector('.answer-card');
+        card.style.transform = 'rotateX(0deg)';
+        slot.style.pointerEvents = 'auto';
     });
     
     // Reset game state
@@ -410,6 +468,7 @@ function resetRound() {
     gameData.game.strikes = 0;
     gameData.game.round_points = 0;
     isStealMode = false;
+    roundFrozen = false;
     
     updateStrikes(0);
     updateRoundPoints(0);
@@ -431,7 +490,7 @@ function resetRound() {
 }
 
 function nextRound() {
-    console.log('nextRound called'); // Debug log
+    console.log('nextRound called');
     // Award any remaining points
     awardRoundPoints();
     
@@ -443,7 +502,7 @@ function nextRound() {
     .then(data => {
         if (data.success) {
             console.log('Next round started, reloading page');
-            location.reload(); // Reload page for new question
+            location.reload();
         }
     })
     .catch(error => {
@@ -470,23 +529,6 @@ function showMessage(message, type) {
     messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Debug: Log when script loads
-console.log('Game script loaded successfully');
-
-// Test function to verify JavaScript is working
-window.testFunction = function() {
-    console.log('Test function called - JavaScript is working!');
-    showMessage('JavaScript is working!', 'success');
-};
-
-// Make functions globally available for onclick handlers
-window.revealAnswer = revealAnswer;
-window.addStrike = addStrike;
-window.switchTeam = switchTeam;
-window.awardSteal = awardSteal;
-window.resetRound = resetRound;
-window.nextRound = nextRound;
-
 // Question overlay functions
 function revealQuestion() {
     const overlay = document.getElementById('question-overlay');
@@ -508,6 +550,22 @@ function closeQuestionOverlay() {
     }, 300);
 }
 
+// Make functions globally available for onclick handlers
+window.revealAnswer = revealAnswer;
+window.addStrike = addStrike;
+window.switchTeam = switchTeam;
+window.awardSteal = awardSteal;
+window.resetRound = resetRound;
+window.nextRound = nextRound;
 window.revealQuestion = revealQuestion;
 window.closeQuestionOverlay = closeQuestionOverlay;
+
+// Debug: Log when script loads
+console.log('Game script loaded successfully');
+
+// Test function to verify JavaScript is working
+window.testFunction = function() {
+    console.log('Test function called - JavaScript is working!');
+    showMessage('JavaScript is working!', 'success');
+};
 {% endblock %}

@@ -466,6 +466,26 @@ def reset_round():
         print(f"Error resetting round: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/get_answer/<int:answer_id>')
+def get_answer(answer_id):
+    try:
+        conn = get_db_connection()
+        answer = conn.execute('SELECT * FROM answers WHERE id = ?', (answer_id,)).fetchone()
+        conn.close()
+        
+        if answer:
+            return jsonify({
+                'success': True,
+                'answer': answer['answer'],
+                'points': answer['points']
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Answer not found'}), 404
+            
+    except Exception as e:
+        print(f"Error getting answer: {e}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
 @app.route('/next_round', methods=['POST'])
 def next_round():
     if 'game_id' not in session:
