@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block header_section %}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-height: calc(100vh - 40px); padding: 20px; position: relative; overflow: hidden;">
+    
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                                       pointer-events: none; z-index: 1000;"></canvas>
+    
+    <!-- Winner Announcement -->
+    {% if winner != 'TIE' %}
+    <div class="winner-announcement" style="text-align: center; z-index: 10;">
+        <h1 style="font-size: 4rem; color: #ffd700; margin-bottom: 20px; 
+                   text-shadow: 3px 3px 6px rgba(0,0,0,0.7); animation: bounce 1s ease-in-out infinite;">
+            🏆 WINNER! 🏆
+        </h1>
+        <h2 style="font-size: 3rem; color: white; margin-bottom: 40px; 
+                   text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+            🦶 {{ winner }}
+        </h2>
+    </div>
+    {% else %}
+    <div class="tie-announcement" style="text-align: center; z-index: 10;">
+        <h1 style="font-size: 4rem; color: #ffd700; margin-bottom: 40px; 
+                   text-shadow: 3px 3px 6px rgba(0,0,0,0.7);">
+            🤝 IT'S A TIE! 🤝
+        </h1>
+    </div>
+    {% endif %}
+    
+    <!-- Final Scores Display -->
+    <div style="display: flex; gap: 50px; margin-bottom: 50px; z-index: 10;">
+        <!-- Team 1 Score -->
+        <div class="score-card {% if team1_score > team2_score %}winner-card{% endif %}" 
+             style="background: linear-gradient(45deg, #ff6b6b, #ee5a24); padding: 40px 60px; 
+                    border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+                    transform: {% if team1_score > team2_score %}scale(1.1){% else %}scale(0.9){% endif %};">
+            <h3 style="font-size: 2rem; margin-bottom: 20px;">🦶 {{ team1_name }}</h3>
+            <div style="font-size: 4rem; font-weight: bold;">{{ team1_score }}</div>
+            {% if team1_score > team2_score %}
+            <div style="margin-top: 20px; font-size: 1.5rem;">🎉 CHAMPION 🎉</div>
+            {% endif %}
+        </div>
+        
+        <!-- VS -->
+        <div style="display: flex; align-items: center; font-size: 3rem; color: #74b9ff;">VS</div>
+        
+        <!-- Team 2 Score -->
+        <div class="score-card {% if team2_score > team1_score %}winner-card{% endif %}"
+             style="background: linear-gradient(45deg, #4834d4, #686de0); padding: 40px 60px; 
+                    border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+                    transform: {% if team2_score > team1_score %}scale(1.1){% else %}scale(0.9){% endif %};">
+            <h3 style="font-size: 2rem; margin-bottom: 20px;">🦶 {{ team2_name }}</h3>
+            <div style="font-size: 4rem; font-weight: bold;">{{ team2_score }}</div>
+            {% if team2_score > team1_score %}
+            <div style="margin-top: 20px; font-size: 1.5rem;">🎉 CHAMPION 🎉</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 20px; z-index: 10;">
+        <form method="POST" action="{{ url_for('new_game') }}" style="display: inline;">
+            <button type="submit" class="btn pulse-animation" 
+                    style="font-size: 1.5rem; padding: 20px 40px; 
+                           background: linear-gradient(45deg, #2ecc71, #27ae60);">
+                🎮 New Game
+            </button>
+        </form>
+        <a href="/" class="btn" style="font-size: 1.5rem; padding: 20px 40px;
+                                       background: linear-gradient(45deg, #3498db, #2980b9);">
+            🏠 Home
+        </a>
+    </div>
+</div>
+
+<!-- Victory Sound -->
+<audio id="victory-sound" autoplay>
+    <source src="{{ url_for('static', filename='assets/victory.mp3') }}" type="audio/mpeg">
+</audio>
+
+<style>
+/* Bounce animation for winner text */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+/* Pulse animation for buttons */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+.pulse-animation:hover {
+    animation: none;
+    transform: scale(1.1) !important;
+}
+
+/* Winner card glow */
+.winner-card {
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 30px rgba(255,215,0,0.5); }
+    50% { box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 50px rgba(255,215,0,0.8); }
+}
+
+/* Fireworks animation */
+@keyframes firework {
+    0% { transform: translate(0, 100vh) scale(0); }
+    50% { transform: translate(0, 50vh) scale(1); }
+    100% { transform: translate(0, -100vh) scale(0); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    h1[style*="font-size: 4rem"] {
+        font-size: 2.5rem !important;
+    }
+    h2[style*="font-size: 3rem"] {
+        font-size: 2rem !important;
+    }
+    .score-card {
+        padding: 30px 40px !important;
+    }
+    div[style*="font-size: 4rem"] {
+        font-size: 3rem !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+// Confetti animation
+(function() {
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const confetti = [];
+    const confettiCount = 300;
+    const gravity = 0.5;
+    const terminalVelocity = 5;
+    const drag = 0.075;
+    const colors = ['#ff6b6b', '#4834d4', '#ffd700', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6'];
+    
+    // Create confetti
+    for (let i = 0; i < confettiCount; i++) {
+        confetti.push({
+            color: colors[Math.floor(Math.random() * colors.length)],
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height - canvas.height,
+            w: Math.random() * 10 + 5,
+            h: Math.random() * 5 + 3,
+            vx: Math.random() * 4 - 2,
+            vy: Math.random() * -10 - 5,
+            angle: Math.random() * 360,
+            spin: Math.random() * 10 - 5
+        });
+    }
+    
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        confetti.forEach((c, index) => {
+            c.vy = Math.min(c.vy + gravity, terminalVelocity);
+            c.vx *= (1 - drag);
+            c.x += c.vx;
+            c.y += c.vy;
+            c.angle += c.spin;
+            
+            // Remove confetti that's off screen
+            if (c.y > canvas.height) {
+                confetti.splice(index, 1);
+                return;
+            }
+            
+            ctx.save();
+            ctx.translate(c.x, c.y);
+            ctx.rotate(c.angle * Math.PI / 180);
+            ctx.fillStyle = c.color;
+            ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+            ctx.restore();
+        });
+        
+        if (confetti.length > 0) {
+            requestAnimationFrame(draw);
+        }
+    }
+    
+    draw();
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+    
+    // Set victory sound volume
+    const victorySound = document.getElementById('victory-sound');
+    if (victorySound) {
+        victorySound.volume = 0.3;
+    }
+})();
+{% endblock %}

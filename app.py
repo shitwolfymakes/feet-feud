@@ -544,6 +544,57 @@ def next_round():
         print(f"Error starting next round: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/final_scores')
+def final_scores():
+    if 'game_id' not in session:
+        return redirect(url_for('index'))
+    
+    try:
+        conn = get_db_connection()
+        game = conn.execute('SELECT * FROM games WHERE id = ?', (session['game_id'],)).fetchone()
+        
+        if not game:
+            conn.close()
+            return redirect(url_for('index'))
+        
+        # Determine winner
+        winner = None
+        if game['team1_score'] > game['team2_score']:
+            winner = game['team1_name']
+            winner_score = game['team1_score']
+            loser = game['team2_name']
+            loser_score = game['team2_score']
+        elif game['team2_score'] > game['team1_score']:
+            winner = game['team2_name']
+            winner_score = game['team2_score']
+            loser = game['team1_name']
+            loser_score = game['team1_score']
+        else:
+            # It's a tie
+            winner = 'TIE'
+            winner_score = game['team1_score']
+            loser_score = game['team2_score']
+        
+        # Mark game as completed
+        conn.execute('UPDATE games SET game_status = ? WHERE id = ?', 
+                    ('completed', session['game_id']))
+        conn.commit()
+        conn.close()
+        
+        return render_template('final_scores.html', 
+                             team1_name=game['team1_name'],
+                             team2_name=game['team2_name'],
+                             team1_score=game['team1_score'],
+                             team2_score=game['team2_score'],
+                             winner=winner,
+                             winner_score=winner_score,
+                             loser=loser if winner != 'TIE' else None,
+                             loser_score=loser_score)
+        
+    except Exception as e:
+        print(f"Error showing final scores: {e}")
+        return redirect(url_for('index'))
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
