@@ -28,7 +28,8 @@
 
 <!-- Current Question -->
 <div class="card" style="text-align: center;">
-    <h2 style="color: #ffd700; margin-bottom: 20px;">{{ game.question }}</h2>
+    <h2 id="question-display" style="color: #ffd700; margin-bottom: 20px;">Question Ready</h2>
+    <p id="question-prompt" style="color: #74b9ff; margin-bottom: 10px;">Click "Reveal Question" to show the survey question</p>
     <div style="font-size: 1.1rem; color: #74b9ff;">
         Current Team: <strong id="current-team">
             {% if game.current_team == 1 %}{{ game.team1_name }}{% else %}{{ game.team2_name }}{% endif %}
@@ -184,11 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
             closeQuestionOverlay();
         }
     });
-    
-    // Automatically reveal question on page load (round start)
-    setTimeout(() => {
-        revealQuestion();
-    }, 500);
 });
 
 async function revealAnswer(answerSlot) {
@@ -475,6 +471,13 @@ function resetRound() {
     document.getElementById('steal-section').style.display = 'none';
     document.getElementById('steal-btn').disabled = true;
     
+    // Reset question display
+    document.getElementById('question-display').textContent = 'Question Ready';
+    const prompt = document.getElementById('question-prompt');
+    if (prompt) {
+        prompt.style.display = 'block';
+    }
+    
     // Send to server
     fetch('/reset_round', {
         method: 'POST',
@@ -538,6 +541,15 @@ function revealQuestion() {
     setTimeout(() => {
         overlay.style.opacity = '1';
     }, 10);
+    
+    // Also update the game board to show the question
+    if (gameData && gameData.game.question) {
+        document.getElementById('question-display').textContent = gameData.game.question;
+        const prompt = document.getElementById('question-prompt');
+        if (prompt) {
+            prompt.style.display = 'none';
+        }
+    }
 }
 
 function closeQuestionOverlay() {
