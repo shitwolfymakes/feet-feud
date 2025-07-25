@@ -406,9 +406,9 @@ def award_points():
             conn.execute('UPDATE games SET team2_score = team2_score + ? WHERE id = ?', 
                         (points, session['game_id']))
         
-        # Also update round points
-        conn.execute('UPDATE games SET round_points = ? WHERE id = ?', 
-                    (points, session['game_id']))
+        # Set round points to 0 after awarding
+        conn.execute('UPDATE games SET round_points = 0 WHERE id = ?', 
+                    (session['game_id'],))
         
         conn.commit()
         conn.close()
@@ -500,14 +500,7 @@ def next_round():
             conn.close()
             return jsonify({'error': 'Game not found'}), 404
         
-        # Award any remaining round points to current team
-        if game['round_points'] > 0:
-            if game['current_team'] == 1:
-                conn.execute('UPDATE games SET team1_score = team1_score + ? WHERE id = ?', 
-                            (game['round_points'], session['game_id']))
-            else:
-                conn.execute('UPDATE games SET team2_score = team2_score + ? WHERE id = ?', 
-                            (game['round_points'], session['game_id']))
+        # Don't award any points - just move to next round
         
         # Get a new random question (excluding current one)
         cursor = conn.cursor()
