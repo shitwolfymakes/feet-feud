@@ -166,8 +166,8 @@ def new_game():
             conn = get_db_connection()
             cursor = conn.cursor()
             
-            # Get a random question
-            cursor.execute('SELECT id FROM questions ORDER BY RANDOM() LIMIT 1')
+            # Get the first question (ordered by ID)
+            cursor.execute('SELECT id FROM questions ORDER BY id ASC LIMIT 1')
             result = cursor.fetchone()
             
             if not result:
@@ -502,19 +502,23 @@ def next_round():
         
         # Don't award any points - just move to next round
         
-        # Get a new random question (excluding current one)
+        # Get the next question in sequence (ordered by ID)
         cursor = conn.cursor()
         cursor.execute('''
             SELECT id FROM questions 
-            WHERE id != ? 
-            ORDER BY RANDOM() 
+            WHERE id > ? 
+            ORDER BY id ASC 
             LIMIT 1
         ''', (game['current_question_id'],))
         
         result = cursor.fetchone()
         if not result:
-            conn.close()
-            return jsonify({'error': 'No more questions available'}), 404
+            # No more questions - could loop back to first or end game
+            cursor.execute('SELECT id FROM questions ORDER BY id ASC LIMIT 1')
+            result = cursor.fetchone()
+            if not result:
+                conn.close()
+                return jsonify({'error': 'No more questions available'}), 404
             
         new_question_id = result[0]
         
