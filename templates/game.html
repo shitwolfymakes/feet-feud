@@ -42,7 +42,10 @@
 </div>
 
 <!-- Current Question -->
-<div class="card" style="text-align: center;">
+<div class="card" style="text-align: center; position: relative;">
+    <div style="position: absolute; top: 10px; right: 15px; color: #74b9ff; font-size: 0.9rem;">
+        Question <span id="question-number">1</span> of <span id="total-questions">?</span>
+    </div>
     <h2 id="question-display" style="color: #ffd700; margin-bottom: 20px;">Question Ready</h2>
     <p id="question-prompt" style="color: #74b9ff; margin-bottom: 10px;">Click "Reveal Question" to show the survey question</p>
 </div>
@@ -185,8 +188,53 @@ let roundFrozen = false;
 async function loadGameData() {
     try {
         const response = await fetch('/game_data_json');
-        gameData = await response.json();
+        const data = await response.json();
+        gameData = data;
         console.log('Game data loaded:', gameData);
+        
+        // Update question number display
+        if (data.question_number && data.total_questions) {
+            document.getElementById('question-number').textContent = data.question_number;
+            document.getElementById('total-questions').textContent = data.total_questions;
+        }
+        
+        // Restore round frozen state
+        if (data.game && data.game.round_frozen) {
+            roundFrozen = true;
+            
+            // Disable award buttons
+            document.getElementById('award-team1').disabled = true;
+            document.getElementById('award-team2').disabled = true;
+            
+            // Show "Reveal All Answers" button
+            document.getElementById('reveal-all-btn').style.display = 'inline-block';
+            
+            // Show round status message
+            document.getElementById('round-status').style.display = 'block';
+            
+            // Update round points display to show it's frozen
+            const roundPointsElement = document.querySelector('[style*="font-size: 1.5rem; color: #ffd700;"]');
+            if (roundPointsElement) {
+                roundPointsElement.style.color = '#95a5a6';
+                roundPointsElement.innerHTML = '0 <span style="font-size: 0.8rem;">(Awarded)</span>';
+            }
+        }
+        
+        // Restore revealed answers
+        if (data.revealed_answer_ids && data.revealed_answer_ids.length > 0) {
+            await restoreRevealedAnswers(data.revealed_answer_ids);
+        }
+        
+        // Check if question was already revealed
+        if (data.question_revealed && data.game && data.game.question) {
+            // Question was revealed, show it
+            document.getElementById('question-display').textContent = data.game.question;
+            const prompt = document.getElementById('question-prompt');
+            if (prompt) {
+                prompt.style.display = 'none';
+            }
+        }
+        
     } catch (error) {
         console.error('Error loading game data:', error);
     }
@@ -204,6 +252,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Restore revealed answers after page refresh
+async function restoreRevealedAnswers(revealedIds) {
+    for (const answerId of revealedIds) {
+        const slot = document.querySelector(`[data-answer-id="${answerId}"]`);
+        if (!slot) continue;
+        
+        try {
+            // Fetch answer data
+            const response = await fetch(`/get_answer/${answerId}`);
+            const answerData = await response.json();
+            
+            if (answerData.success) {
+                // Populate the back of the card
+                const cardBack = slot.querySelector('.card-back');
+                cardBack.querySelector('.answer-text').textContent = answerData.answer;
+                cardBack.querySelector('.answer-points').textContent = answerData.points;
+                
+                // Flip the card instantly (no animation for restore)
+                const card = slot.querySelector('.answer-card');
+                card.style.transition = 'none';
+                card.style.transform = 'rotateX(-180deg)';
+                
+                // Mark as revealed
+                revealedAnswers.add(answerId.toString());
+                
+                // Disable further clicks
+                slot.style.pointerEvents = 'none';
+                
+                // Re-enable transition after a brief delay
+                setTimeout(() => {
+                    card.style.transition = 'transform 0.6s';
+                }, 50);
+            }
+        } catch (error) {
+            console.error('Error restoring answer:', error);
+        }
+    }
+}
 
 async function revealAnswer(answerSlot) {
     if (!gameData) {
@@ -246,6 +333,13 @@ async function revealAnswer(answerSlot) {
         
         // Mark as revealed
         revealedAnswers.add(answerId);
+        
+        // Track in database
+        fetch('/reveal_answer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answer_id: answerId })
+        }).catch(error => console.error('Error tracking reveal:', error));
         
         // Disable further clicks
         answerSlot.style.pointerEvents = 'none';
@@ -536,6 +630,9 @@ function resetRound() {
     // Hide "Reveal All Answers" button
     document.getElementById('reveal-all-btn').style.display = 'none';
     
+    // Hide round status message
+    document.getElementById('round-status').style.display = 'none';
+    
     // Reset round points display color
     const roundPointsElement = document.querySelector('[style*="color: #95a5a6;"]');
     if (roundPointsElement) {
@@ -620,6 +717,12 @@ function revealQuestion() {
             prompt.style.display = 'none';
         }
     }
+    
+    // Track that question has been revealed
+    fetch('/reveal_question_state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    }).catch(error => console.error('Error tracking question reveal:', error));
 }
 
 function closeQuestionOverlay() {
@@ -660,6 +763,13 @@ async function revealAllAnswers() {
                 
                 // Mark as revealed
                 revealedAnswers.add(answerId);
+                
+                // Track in database
+                fetch('/reveal_answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answer_id: answerId })
+                }).catch(error => console.error('Error tracking reveal:', error));
                 
                 // Disable further clicks
                 slot.style.pointerEvents = 'none';

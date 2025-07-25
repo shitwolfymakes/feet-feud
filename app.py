@@ -47,11 +47,35 @@ def init_db():
             current_team INTEGER DEFAULT 1,
             strikes INTEGER DEFAULT 0,
             round_points INTEGER DEFAULT 0,
+            round_frozen INTEGER DEFAULT 0,
             game_status TEXT DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (current_question_id) REFERENCES questions (id)
         )
     ''')
+    
+    # Create revealed_answers table to track which answers have been revealed
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS revealed_answers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            game_id INTEGER,
+            answer_id INTEGER,
+            revealed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (game_id) REFERENCES games (id),
+            FOREIGN KEY (answer_id) REFERENCES answers (id),
+            UNIQUE(game_id, answer_id)
+        )
+    ''')
+    
+    # Add round_frozen column to existing games if it doesn't exist
+    cursor.execute('''
+        PRAGMA table_info(games)
+    ''')
+    columns = [column[1] for column in cursor.fetchall()]
+    if 'round_frozen' not in columns:
+        cursor.execute('''
+            ALTER TABLE games ADD COLUMN round_frozen INTEGER DEFAULT 0
+        ''')
     
     conn.commit()
     conn.close()
@@ -136,6 +160,45 @@ def seed_sample_data():
                 ('Shower', 5),
                 ('Pray', 3),
                 ('Check phone', 2)
+            ]
+        },
+        {
+            'question': 'Name a popular breakfast food',
+            'answers': [
+                ('Eggs', 30),
+                ('Cereal', 25),
+                ('Toast', 15),
+                ('Bacon', 12),
+                ('Pancakes', 8),
+                ('Coffee', 5),
+                ('Oatmeal', 3),
+                ('Fruit', 2)
+            ]
+        },
+        {
+            'question': 'Name something you might find in a garage',
+            'answers': [
+                ('Car', 35),
+                ('Tools', 25),
+                ('Lawn mower', 15),
+                ('Bicycle', 10),
+                ('Storage boxes', 7),
+                ('Workbench', 5),
+                ('Paint', 2),
+                ('Ladder', 1)
+            ]
+        },
+        {
+            'question': 'Name a reason people call in sick to work',
+            'answers': [
+                ('Flu/Cold', 35),
+                ('Stomach bug', 20),
+                ('Headache', 15),
+                ('Doctor appointment', 10),
+                ('Fever', 8),
+                ('Back pain', 7),
+                ('Family emergency', 3),
+                ('Food poisoning', 2)
             ]
         }
     ]
@@ -258,11 +321,43 @@ def game_data_json():
             ORDER BY points DESC
         ''', (game_row['current_question_id'],)).fetchall()
         
+        # Get revealed answers for this game and question
+        revealed_rows = conn.execute('''
+            SELECT ra.answer_id 
+            FROM revealed_answers ra
+            JOIN answers a ON ra.answer_id = a.id
+            WHERE ra.game_id = ? AND a.question_id = ?
+        ''', (session['game_id'], game_row['current_question_id'])).fetchall()
+        
+        revealed_answer_ids = [row['answer_id'] for row in revealed_rows]
+        
+        # Get question position
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COUNT(*) FROM questions WHERE id <= ?
+        ''', (game_row['current_question_id'],))
+        current_question_number = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM questions')
+        total_questions = cursor.fetchone()[0]
+        
         conn.close()
         
+        # Convert game row to dict and ensure round_frozen is included
+        game_dict = dict(game_row)
+        if 'round_frozen' not in game_dict:
+            game_dict['round_frozen'] = 0
+        
+        # Check if question has been revealed
+        question_revealed = session.get(f'question_revealed_{session["game_id"]}', False)
+        
         return jsonify({
-            'game': dict(game_row),
-            'answers': [dict(row) for row in answers_rows]
+            'game': game_dict,
+            'answers': [dict(row) for row in answers_rows],
+            'revealed_answer_ids': revealed_answer_ids,
+            'question_number': current_question_number,
+            'total_questions': total_questions,
+            'question_revealed': question_revealed
         })
         
     except Exception as e:
@@ -406,8 +501,8 @@ def award_points():
             conn.execute('UPDATE games SET team2_score = team2_score + ? WHERE id = ?', 
                         (points, session['game_id']))
         
-        # Set round points to 0 after awarding
-        conn.execute('UPDATE games SET round_points = 0 WHERE id = ?', 
+        # Set round points to 0 and freeze the round after awarding
+        conn.execute('UPDATE games SET round_points = 0, round_frozen = 1 WHERE id = ?', 
                     (session['game_id'],))
         
         conn.commit()
@@ -450,12 +545,31 @@ def reset_round():
     
     try:
         conn = get_db_connection()
+        
+        # Get current question
+        game = conn.execute('SELECT current_question_id FROM games WHERE id = ?', 
+                           (session['game_id'],)).fetchone()
+        
+        if game:
+            # Clear revealed answers for this question
+            conn.execute('''
+                DELETE FROM revealed_answers 
+                WHERE game_id = ? AND answer_id IN (
+                    SELECT id FROM answers WHERE question_id = ?
+                )
+            ''', (session['game_id'], game['current_question_id']))
+        
+        # Reset game state
         conn.execute('''
             UPDATE games SET 
             strikes = 0, 
-            round_points = 0 
+            round_points = 0,
+            round_frozen = 0
             WHERE id = ?
         ''', (session['game_id'],))
+        
+        # Clear question reveal state
+        session.pop(f'question_revealed_{session["game_id"]}', None)
         
         conn.commit()
         conn.close()
@@ -528,9 +642,13 @@ def next_round():
             current_question_id = ?, 
             current_team = 1, 
             strikes = 0, 
-            round_points = 0 
+            round_points = 0,
+            round_frozen = 0
             WHERE id = ?
         ''', (new_question_id, session['game_id']))
+        
+        # Clear question reveal state for new round
+        session.pop(f'question_revealed_{session["game_id"]}', None)
         
         conn.commit()
         conn.close()
@@ -540,6 +658,70 @@ def next_round():
     except Exception as e:
         print(f"Error starting next round: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/reveal_question_state', methods=['POST'])
+def reveal_question_state():
+    if 'game_id' not in session:
+        return jsonify({'error': 'No active game'}), 400
+    
+    try:
+        # Store in session that question has been revealed for this round
+        session[f'question_revealed_{session["game_id"]}'] = True
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        print(f"Error setting question reveal state: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/reveal_answer', methods=['POST'])
+def reveal_answer():
+    if 'game_id' not in session:
+        return jsonify({'error': 'No active game'}), 400
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        answer_id = data.get('answer_id')
+        
+        if not answer_id:
+            return jsonify({'error': 'No answer_id provided'}), 400
+        
+        conn = get_db_connection()
+        
+        # Record that this answer has been revealed
+        try:
+            conn.execute('''
+                INSERT INTO revealed_answers (game_id, answer_id)
+                VALUES (?, ?)
+            ''', (session['game_id'], answer_id))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            # Answer already revealed, that's okay
+            pass
+        
+        conn.close()
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        print(f"Error recording revealed answer: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/questions')
+def view_questions():
+    conn = get_db_connection()
+    questions = conn.execute('''
+        SELECT q.id, q.question, COUNT(a.id) as answer_count
+        FROM questions q
+        LEFT JOIN answers a ON q.id = a.question_id
+        GROUP BY q.id
+        ORDER BY q.id ASC
+    ''').fetchall()
+    conn.close()
+    
+    return render_template('questions.html', questions=questions)
 
 @app.route('/final_scores')
 def final_scores():
