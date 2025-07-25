@@ -24,6 +24,9 @@
                 {% for i in range(3 - game.strikes) %}⭕{% endfor %}
             </span>
         </div>
+        <div id="round-status" style="margin-top: 10px; color: #95a5a6; font-size: 0.9rem; display: none;">
+            ✓ Points Awarded - Safe to reveal answers
+        </div>
     </div>
     
     <div>
@@ -107,6 +110,10 @@
     </button>
     <button onclick="resetRound()" class="btn" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); margin-right: 10px;">
         🔄 Reset Round
+    </button>
+    <button onclick="revealAllAnswers()" class="btn" id="reveal-all-btn" 
+            style="background: linear-gradient(45deg, #9b59b6, #8e44ad); margin-right: 10px; display: none;">
+        👁️ Reveal All Answers
     </button>
     <a href="/final_scores" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
         🏁 End Game
@@ -330,6 +337,12 @@ function awardToTeam(team) {
     document.getElementById('award-team1').disabled = true;
     document.getElementById('award-team2').disabled = true;
     
+    // Show "Reveal All Answers" button
+    document.getElementById('reveal-all-btn').style.display = 'inline-block';
+    
+    // Show round status message
+    document.getElementById('round-status').style.display = 'block';
+    
     // Update round points display to show it's frozen
     const roundPointsElement = document.querySelector('[style*="font-size: 1.5rem; color: #ffd700;"]');
     if (roundPointsElement) {
@@ -520,6 +533,9 @@ function resetRound() {
     document.getElementById('award-team1').disabled = false;
     document.getElementById('award-team2').disabled = false;
     
+    // Hide "Reveal All Answers" button
+    document.getElementById('reveal-all-btn').style.display = 'none';
+    
     // Reset round points display color
     const roundPointsElement = document.querySelector('[style*="color: #95a5a6;"]');
     if (roundPointsElement) {
@@ -616,6 +632,54 @@ function closeQuestionOverlay() {
     }, 300);
 }
 
+async function revealAllAnswers() {
+    const unrevealedSlots = document.querySelectorAll('.answer-slot');
+    
+    for (const slot of unrevealedSlots) {
+        const answerId = slot.getAttribute('data-answer-id');
+        
+        // Skip if already revealed
+        if (revealedAnswers.has(answerId)) {
+            continue;
+        }
+        
+        // Fetch and reveal each answer
+        try {
+            const response = await fetch(`/get_answer/${answerId}`);
+            const answerData = await response.json();
+            
+            if (answerData.success) {
+                // Populate the back of the card
+                const cardBack = slot.querySelector('.card-back');
+                cardBack.querySelector('.answer-text').textContent = answerData.answer;
+                cardBack.querySelector('.answer-points').textContent = answerData.points;
+                
+                // Flip the card
+                const card = slot.querySelector('.answer-card');
+                card.style.transform = 'rotateX(-180deg)';
+                
+                // Mark as revealed
+                revealedAnswers.add(answerId);
+                
+                // Disable further clicks
+                slot.style.pointerEvents = 'none';
+                
+                // Small delay between reveals for effect
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        } catch (error) {
+            console.error('Error revealing answer:', error);
+        }
+    }
+    
+    // Play a single ding at the end
+    const dingSound = document.getElementById('ding-sound');
+    if (dingSound) {
+        dingSound.currentTime = 0;
+        dingSound.play().catch(e => console.log('Audio play failed:', e));
+    }
+}
+
 // Make functions globally available for onclick handlers
 window.revealAnswer = revealAnswer;
 window.addStrike = addStrike;
@@ -625,6 +689,7 @@ window.resetRound = resetRound;
 window.nextRound = nextRound;
 window.revealQuestion = revealQuestion;
 window.closeQuestionOverlay = closeQuestionOverlay;
+window.revealAllAnswers = revealAllAnswers;
 
 // Debug: Log when script loads
 console.log('Game script loaded successfully');
