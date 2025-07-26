@@ -1,4 +1,5 @@
 .idea/
 venv/
 /family_feud.db
+feet_feud.db
 .mypy_cache/

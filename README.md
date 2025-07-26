@@ -1,4 +1,4 @@
-# Family Feud Web Game
+# Feet Feud Web Game
 
 A web-based implementation of the classic Family Feud game show using Flask and SQLite. Perfect for hosting live game show events with a presentation-style interface.
 
@@ -57,7 +57,7 @@ pip install Flask==3.3
 
 Create the following folder structure:
 ```
-family-feud/
+feet-feud/
 ├── app.py
 ├── requirements.txt
 ├── README.md
@@ -123,7 +123,7 @@ deactivate
 - `templates/index.html` - Home page
 - `templates/new_game.html` - Team setup page
 - `templates/game.html` - Main game interface with host controls
-- `family_feud.db` - SQLite database (created automatically)
+- `feet_feud.db` - SQLite database (created automatically)
 - `requirements.txt` - Python dependencies
 
 ## Database Schema
@@ -141,7 +141,7 @@ You can add your own questions by inserting data into the database:
 ```python
 # Connect to database
 import sqlite3
-conn = sqlite3.connect('family_feud.db')
+conn = sqlite3.connect('feet_feud.db')
 cursor = conn.cursor()
 
 # Add a question
@@ -201,7 +201,7 @@ The game comes with sample questions, but you can add as many as you want using 
 
 **Game won't start**: Make sure your virtual environment is activated and Flask is installed.
 
-**Database errors**: Delete `family_feud.db` file and restart the app to recreate the database.
+**Database errors**: Delete `feet_feud.db` file and restart the app to recreate the database.
 
 **Port conflicts**: If port 5000 is in use, modify the last line in `app.py`:
 ```python
@@ -234,7 +234,7 @@ This project is open source and available under the MIT License.
 - `templates/index.html` - Home page
 - `templates/new_game.html` - Team setup page
 - `templates/game.html` - Main game interface
-- `family_feud.db` - SQLite database (created automatically)
+- `feet_feud.db` - SQLite database (created automatically)
 
 ## Database Schema
 
@@ -251,7 +251,7 @@ You can add your own questions by inserting data into the database:
 ```python
 # Connect to database
 import sqlite3
-conn = sqlite3.connect('family_feud.db')
+conn = sqlite3.connect('feet_feud.db')
 cursor = conn.cursor()
 
 # Add a question
@@ -302,7 +302,7 @@ The game comes with sample questions, but you can add as many as you want using 
 
 **Game won't start**: Make sure Flask is installed and you're running `python app.py` from the correct directory.
 
-**Database errors**: Delete `family_feud.db` file and restart the app to recreate the database.
+**Database errors**: Delete `feet_feud.db` file and restart the app to recreate the database.
 
 **Port conflicts**: If port 5000 is in use, modify the last line in `app.py`:
 ```python

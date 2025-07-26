@@ -12,7 +12,7 @@ os.makedirs('static/assets', exist_ok=True)
 
 # Database initialization
 def init_db():
-    conn = sqlite3.connect('family_feud.db')
+    conn = sqlite3.connect('feet_feud.db')
     cursor = conn.cursor()
     
     # Create questions table
@@ -81,7 +81,7 @@ def init_db():
     conn.close()
 
 def get_db_connection():
-    conn = sqlite3.connect('family_feud.db')
+    conn = sqlite3.connect('feet_feud.db')
     conn.row_factory = sqlite3.Row
     return conn
 
