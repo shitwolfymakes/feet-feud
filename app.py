@@ -377,7 +377,7 @@ def add_strike():
             conn.close()
             return jsonify({'error': 'Game not found'}), 404
         
-        new_strikes = game['strikes'] + 1
+        new_strikes = (game['strikes'] + 1) % 3
         conn.execute('UPDATE games SET strikes = ? WHERE id = ?', 
                     (new_strikes, session['game_id']))
         conn.commit()
