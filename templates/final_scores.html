@@ -38,7 +38,7 @@
              style="background: linear-gradient(45deg, #ff6b6b, #ee5a24); padding: 40px 60px; 
                     border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
                     transform: {% if team1_score > team2_score %}scale(1.1){% else %}scale(0.9){% endif %};">
-            <h3 style="font-size: 2rem; margin-bottom: 20px;">🦶 {{ team1_name }}</h3>
+            <h3 style="font-size: 2rem; margin-bottom: 20px;">{{ team1_name }} <span class="flipped">🦶</span></h3>
             <div style="font-size: 4rem; font-weight: bold;">{{ team1_score }}</div>
             {% if team1_score > team2_score %}
             <div style="margin-top: 20px; font-size: 1.5rem;">🎉 CHAMPION 🎉</div>
