@@ -16,8 +16,18 @@
 
     <!-- Center Column -->
     <div class="game-center-column">
+
+        <!-- Current Question -->
+        <div id="currentquestion" class="card" style="text-align: center; position: relative; margin-bottom:0">
+            <div style="position: absolute; top: 10px; right: 15px; color: #74b9ff; font-size: 0.9rem;">
+                Round <span id="question-number">1</span> of <span id="total-questions">?</span>
+            </div>
+            <h2 id="question-display" style="color: #ffd700; margin-bottom: 20px;"></h2>
+            <!--<p id="question-prompt" style="color: #74b9ff; margin-bottom: 10px;">Click "Reveal Question" to show the survey question</p>-->
+        </div>
+
         <!-- Answer Board -->
-        <div id="answerboard" class="card">
+        <div id="answerboard" class="card" style="margin-top:0">
             <div id="answer-board" class="answer-grid">
                 {% for answer in answers %}
                 <div class="answer-slot" data-answer-id="{{ answer.id }}" data-index="{{ loop.index }}"
@@ -47,15 +57,6 @@
             </div>
         </div>
 
-        <!-- Current Question -->
-        <div id="currentquestion" class="card" style="text-align: center; position: relative;">
-            <div style="position: absolute; top: 10px; right: 15px; color: #74b9ff; font-size: 0.9rem;">
-                Question <span id="question-number">1</span> of <span id="total-questions">?</span>
-            </div>
-            <h2 id="question-display" style="color: #ffd700; margin-bottom: 20px;">Question Ready</h2>
-            <p id="question-prompt" style="color: #74b9ff; margin-bottom: 10px;">Click "Reveal Question" to show the survey question</p>
-        </div>
-
         <!-- Round Points -->
         <div id="roundpoints" class="card" style="text-align: center;">
             <h4>Round Points</h4>
@@ -81,24 +82,20 @@
                 <button onclick="addStrike()" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
                     ❌ Add Strike
                 </button>
+                <button onclick="nextRound()" class="btn btn-secondary" style="margin-right: 10px;">
+                    🎲 Next Round
+                </button>
+                <button onclick="resetRound()" class="btn" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); margin-right: 10px;">
+                    🔄 Reset Round
+                </button>
+                <button onclick="revealAllAnswers()" class="btn" id="reveal-all-btn" 
+                        style="background: linear-gradient(45deg, #9b59b6, #8e44ad); margin-right: 10px; display: none;">
+                    👁️ Reveal All Answers
+                </button>
+                <a href="/final_scores" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
+                    🏁 End Game
+                </a>
             </div>
-        </div>
-
-        <!-- Round Controls -->
-        <div id="roundcontrols" class="card" style="text-align: center;">
-            <button onclick="nextRound()" class="btn btn-secondary" style="margin-right: 10px;">
-                🎲 Next Round
-            </button>
-            <button onclick="resetRound()" class="btn" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); margin-right: 10px;">
-                🔄 Reset Round
-            </button>
-            <button onclick="revealAllAnswers()" class="btn" id="reveal-all-btn" 
-                    style="background: linear-gradient(45deg, #9b59b6, #8e44ad); margin-right: 10px; display: none;">
-                👁️ Reveal All Answers
-            </button>
-            <a href="/final_scores" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
-                🏁 End Game
-            </a>
         </div>
     </div>
 
