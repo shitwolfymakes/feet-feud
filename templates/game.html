@@ -60,7 +60,7 @@
         <!-- Round Points and Game Controls Container -->
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
             <!-- Round Points -->
-            <div id="roundpoints" class="card" style="text-align: center;">
+            <div id="roundpoints" class="card" style="text-align: center; margin-top:0">
                 <h4>Round Points</h4>
                 <div style="font-size: 1.5rem; color: #ffd700;">{{ game.round_points }}</div>
                 <div style="margin-top: 10px;">
@@ -75,7 +75,7 @@
             </div>
 
             <!-- Game Controls -->
-            <div id="gamecontrols" class="card" style="text-align: center;">
+            <div id="gamecontrols" class="card" style="text-align: center; margin-top:0">
                 <h3 style="color: #74b9ff; margin-bottom: 20px;">Host Controls</h3>
                 <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                     <button onclick="revealQuestion()" class="btn" style="background: linear-gradient(45deg, #3498db, #2980b9);">
@@ -89,10 +89,6 @@
                     </button>
                     <button onclick="resetRound()" class="btn" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); margin-right: 10px;">
                         🔄 Reset Round
-                    </button>
-                    <button onclick="revealAllAnswers()" class="btn" id="reveal-all-btn" 
-                            style="background: linear-gradient(45deg, #9b59b6, #8e44ad); margin-right: 10px; display: none;">
-                        👁️ Reveal All Answers
                     </button>
                     <a href="/final_scores" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
                         🏁 End Game
@@ -198,9 +194,6 @@ async function loadGameData() {
             // Disable award buttons
             document.getElementById('award-team1').disabled = true;
             document.getElementById('award-team2').disabled = true;
-            
-            // Show "Reveal All Answers" button
-            document.getElementById('reveal-all-btn').style.display = 'inline-block';
             
             // Show round status message
             document.getElementById('round-status').style.display = 'block';
@@ -459,9 +452,6 @@ function awardToTeam(team) {
     document.getElementById('award-team1').disabled = true;
     document.getElementById('award-team2').disabled = true;
     
-    // Show "Reveal All Answers" button
-    document.getElementById('reveal-all-btn').style.display = 'inline-block';
-    
     // Show round status message
     document.getElementById('round-status').style.display = 'block';
     
@@ -655,10 +645,7 @@ function resetRound() {
     // Re-enable award buttons
     document.getElementById('award-team1').disabled = false;
     document.getElementById('award-team2').disabled = false;
-    
-    // Hide "Reveal All Answers" button
-    document.getElementById('reveal-all-btn').style.display = 'none';
-    
+
     // Hide round status message
     document.getElementById('round-status').style.display = 'none';
     
