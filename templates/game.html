@@ -18,9 +18,9 @@
     <div class="game-center-column">
         <!-- Answer Board -->
         <div id="answerboard" class="card">
-            <div id="answer-board" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+            <div id="answer-board" class="answer-grid">
                 {% for answer in answers %}
-                <div class="answer-slot" data-answer-id="{{ answer.id }}"
+                <div class="answer-slot" data-answer-id="{{ answer.id }}" data-index="{{ loop.index }}"
                      onclick="revealAnswer(this)"
                      style="position: relative; height: 80px; perspective: 1000px;">
                     <div class="answer-card" style="position: absolute; width: 100%; height: 100%; 
