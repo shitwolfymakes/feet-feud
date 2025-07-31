@@ -6,7 +6,7 @@
     <div id="team1score">
         <div class="card" style="text-align: center; background: linear-gradient(45deg, #ff6b6b, #ee5a24);">
             <h3>{{ game.team1_name }} <span class="flipped">🦶</span></h3>
-            <div style="font-size: 2rem; font-weight: bold;">{{ game.team1_score }}</div>
+            <div class="team-score" style="font-size: 2rem; font-weight: bold;">{{ game.team1_score }}</div>
         </div>
         <button onclick="awardToTeam(1)" class="btn award-btn" id="award-team1" 
                 style="width: 100%; margin-top: 10px; background: linear-gradient(45deg, #ff6b6b, #ee5a24);">
@@ -22,12 +22,12 @@
             <div style="position: absolute; top: 10px; right: 15px; color: #74b9ff; font-size: 0.9rem;">
                 Round <span id="question-number">1</span> of <span id="total-questions">?</span>
             </div>
-            <h2 id="question-display" style="color: #ffd700; margin-bottom: 20px;"></h2>
+            <h2 id="question-display" style="color: #ffd700; margin-bottom: 0;">Round <span id="round-number">1</span></h2>
             <!--<p id="question-prompt" style="color: #74b9ff; margin-bottom: 10px;">Click "Reveal Question" to show the survey question</p>-->
         </div>
 
         <!-- Answer Board -->
-        <div id="answerboard" class="card" style="margin-top:0">
+        <div id="answerboard" class="card" style="margin-top:0;margin-bottom:0">
             <div id="answer-board" class="answer-grid">
                 {% for answer in answers %}
                 <div class="answer-slot" data-answer-id="{{ answer.id }}" data-index="{{ loop.index }}"
@@ -57,44 +57,47 @@
             </div>
         </div>
 
-        <!-- Round Points -->
-        <div id="roundpoints" class="card" style="text-align: center;">
-            <h4>Round Points</h4>
-            <div style="font-size: 1.5rem; color: #ffd700;">{{ game.round_points }}</div>
-            <div style="margin-top: 10px;">
-                <span style="color: #ff7675;">Strikes: </span>
-                <span id="strikes-display">
-                    {% for i in range(game.strikes % 3) %}❌{% endfor %}{% for i in range(3 - (game.strikes % 3)) %}⭕{% endfor %}
-                </span>
+        <!-- Round Points and Game Controls Container -->
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+            <!-- Round Points -->
+            <div id="roundpoints" class="card" style="text-align: center;">
+                <h4>Round Points</h4>
+                <div style="font-size: 1.5rem; color: #ffd700;">{{ game.round_points }}</div>
+                <div style="margin-top: 10px;">
+                    <span style="color: #ff7675;">Strikes: </span>
+                    <span id="strikes-display">
+                        {% for i in range(game.strikes % 3) %}❌{% endfor %}{% for i in range(3 - (game.strikes % 3)) %}⭕{% endfor %}
+                    </span>
+                </div>
+                <div id="round-status" style="margin-top: 10px; color: #95a5a6; font-size: 0.9rem; display: none;">
+                    ✓ Points Awarded - Safe to reveal answers
+                </div>
             </div>
-            <div id="round-status" style="margin-top: 10px; color: #95a5a6; font-size: 0.9rem; display: none;">
-                ✓ Points Awarded - Safe to reveal answers
-            </div>
-        </div>
 
-        <!-- Game Controls -->
-        <div id="gamecontrols" class="card" style="text-align: center;">
-            <h3 style="color: #74b9ff; margin-bottom: 20px;">Host Controls</h3>
-            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                <button onclick="revealQuestion()" class="btn" style="background: linear-gradient(45deg, #3498db, #2980b9);">
-                    📋 Reveal Question
-                </button>
-                <button onclick="addStrike()" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
-                    ❌ Add Strike
-                </button>
-                <button onclick="nextRound()" class="btn btn-secondary" style="margin-right: 10px;">
-                    🎲 Next Round
-                </button>
-                <button onclick="resetRound()" class="btn" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); margin-right: 10px;">
-                    🔄 Reset Round
-                </button>
-                <button onclick="revealAllAnswers()" class="btn" id="reveal-all-btn" 
-                        style="background: linear-gradient(45deg, #9b59b6, #8e44ad); margin-right: 10px; display: none;">
-                    👁️ Reveal All Answers
-                </button>
-                <a href="/final_scores" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
-                    🏁 End Game
-                </a>
+            <!-- Game Controls -->
+            <div id="gamecontrols" class="card" style="text-align: center;">
+                <h3 style="color: #74b9ff; margin-bottom: 20px;">Host Controls</h3>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="revealQuestion()" class="btn" style="background: linear-gradient(45deg, #3498db, #2980b9);">
+                        📋 Reveal Question
+                    </button>
+                    <button onclick="addStrike()" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
+                        ❌ Add Strike
+                    </button>
+                    <button onclick="nextRound()" class="btn btn-secondary" style="margin-right: 10px;">
+                        🎲 Next Round
+                    </button>
+                    <button onclick="resetRound()" class="btn" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); margin-right: 10px;">
+                        🔄 Reset Round
+                    </button>
+                    <button onclick="revealAllAnswers()" class="btn" id="reveal-all-btn" 
+                            style="background: linear-gradient(45deg, #9b59b6, #8e44ad); margin-right: 10px; display: none;">
+                        👁️ Reveal All Answers
+                    </button>
+                    <a href="/final_scores" class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
+                        🏁 End Game
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -103,7 +106,7 @@
     <div id="team2score">
         <div class="card" style="text-align: center; background: linear-gradient(45deg, #4834d4, #686de0);">
             <h3>🦶 {{ game.team2_name }}</h3>
-            <div style="font-size: 2rem; font-weight: bold;">{{ game.team2_score }}</div>
+            <div class="team-score" style="font-size: 2rem; font-weight: bold;">{{ game.team2_score }}</div>
         </div>
         <button onclick="awardToTeam(2)" class="btn award-btn" id="award-team2" 
                 style="width: 100%; margin-top: 10px; background: linear-gradient(45deg, #4834d4, #686de0);">
@@ -185,6 +188,7 @@ async function loadGameData() {
         if (data.question_number && data.total_questions) {
             document.getElementById('question-number').textContent = data.question_number;
             document.getElementById('total-questions').textContent = data.total_questions;
+            document.getElementById('round-number').textContent = data.question_number;
         }
         
         // Restore round frozen state
@@ -568,7 +572,8 @@ function awardRoundPoints() {
 }
 
 function updateScores() {
-    const team1ScoreElements = document.querySelectorAll('[style*="font-size: 2rem; font-weight: bold;"]');
+    //const team1ScoreElements = document.querySelectorAll('[style*="font-size: 2rem; font-weight: bold;"]');
+    team1ScoreElements = document.querySelectorAll('.team-score');
     if (team1ScoreElements[0]) team1ScoreElements[0].textContent = gameData.game.team1_score;
     if (team1ScoreElements[1]) team1ScoreElements[1].textContent = gameData.game.team2_score;
 }
@@ -619,11 +624,11 @@ function updateStrikes(strikes) {
     strikesDisplay.innerHTML = strikesHtml;
     
     // Hide steal section if strikes reset
-    if (strikes < 3) {
+    /*if (strikes < 3) {
         document.getElementById('steal-section').style.display = 'none';
         document.getElementById('steal-btn').disabled = true;
         isStealMode = false;
-    }
+    }*/
 }
 
 function resetRound() {
@@ -644,8 +649,8 @@ function resetRound() {
     
     updateStrikes(0);
     updateRoundPoints(0);
-    document.getElementById('steal-section').style.display = 'none';
-    document.getElementById('steal-btn').disabled = true;
+    //document.getElementById('steal-section').style.display = 'none';
+    //document.getElementById('steal-btn').disabled = true;
     
     // Re-enable award buttons
     document.getElementById('award-team1').disabled = false;
