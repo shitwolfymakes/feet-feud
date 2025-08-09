@@ -3,6 +3,8 @@ import sqlite3
 import random
 from datetime import datetime
 import os
+import sys
+import json
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'
@@ -85,7 +87,79 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+def load_questions_from_json(json_file_path):
+    """
+    Load questions and answers from a JSON file and insert into database.
+    
+    Expected JSON format:
+    {
+        "questions": [
+            {
+                "question": "Question text",
+                "answers": [
+                    {"answer": "Answer text", "points": 25},
+                    {"answer": "Another answer", "points": 20}
+                ]
+            }
+        ]
+    }
+    """
+    try:
+        with open(json_file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        if 'questions' not in data:
+            print(f"Error: JSON file must have a 'questions' key at the root level")
+            return False
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Clear existing questions and answers if loading from JSON
+        print("Clearing existing questions and answers...")
+        cursor.execute('DELETE FROM answers')
+        cursor.execute('DELETE FROM questions')
+        
+        # Insert questions and answers from JSON
+        questions_added = 0
+        for q_data in data['questions']:
+            if 'question' not in q_data or 'answers' not in q_data:
+                print(f"Warning: Skipping malformed question entry: {q_data}")
+                continue
+            
+            cursor.execute('INSERT INTO questions (question) VALUES (?)', (q_data['question'],))
+            question_id = cursor.lastrowid
+            questions_added += 1
+            
+            # Sort answers by points (highest first) before inserting
+            sorted_answers = sorted(q_data['answers'], key=lambda x: x.get('points', 0), reverse=True)
+            
+            for a_data in sorted_answers:
+                if 'answer' not in a_data or 'points' not in a_data:
+                    print(f"Warning: Skipping malformed answer entry: {a_data}")
+                    continue
+                
+                cursor.execute('INSERT INTO answers (question_id, answer, points) VALUES (?, ?, ?)',
+                             (question_id, a_data['answer'], a_data['points']))
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"Successfully loaded {questions_added} questions from {json_file_path}")
+        return True
+        
+    except FileNotFoundError:
+        print(f"Error: JSON file not found: {json_file_path}")
+        return False
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON format in {json_file_path}: {e}")
+        return False
+    except Exception as e:
+        print(f"Error loading questions from JSON: {e}")
+        return False
+
 def seed_sample_data():
+    """Seed database with default sample data if no JSON file is provided"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -213,6 +287,7 @@ def seed_sample_data():
     
     conn.commit()
     conn.close()
+    print("Loaded default sample questions")
 
 @app.route('/')
 def index():
@@ -789,5 +864,15 @@ def internal_error(error):
 
 if __name__ == '__main__':
     init_db()
-    seed_sample_data()
+    
+    # Check for JSON file in command line arguments
+    if len(sys.argv) > 1:
+        json_file = sys.argv[1]
+        if not load_questions_from_json(json_file):
+            print("Failed to load questions from JSON. Using default sample data.")
+            seed_sample_data()
+    else:
+        # No JSON file provided, use default sample data
+        seed_sample_data()
+    
     app.run(debug=True)
