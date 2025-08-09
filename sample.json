@@ -1,0 +1,134 @@
+{
+  "questions": [
+    {
+      "question": "Name something you find in a kitchen",
+      "answers": [
+        {"answer": "Refrigerator", "points": 25},
+        {"answer": "Stove/Oven", "points": 20},
+        {"answer": "Sink", "points": 15},
+        {"answer": "Microwave", "points": 12},
+        {"answer": "Dishwasher", "points": 10},
+        {"answer": "Cabinets", "points": 8},
+        {"answer": "Table", "points": 6},
+        {"answer": "Toaster", "points": 4}
+      ]
+    },
+    {
+      "question": "Name a popular pet",
+      "answers": [
+        {"answer": "Dog", "points": 45},
+        {"answer": "Cat", "points": 35},
+        {"answer": "Fish", "points": 8},
+        {"answer": "Bird", "points": 5},
+        {"answer": "Hamster", "points": 3},
+        {"answer": "Rabbit", "points": 2},
+        {"answer": "Turtle", "points": 1},
+        {"answer": "Snake", "points": 1}
+      ]
+    },
+    {
+      "question": "Name something people do at the beach",
+      "answers": [
+        {"answer": "Swimming", "points": 30},
+        {"answer": "Sunbathing", "points": 25},
+        {"answer": "Building sandcastles", "points": 15},
+        {"answer": "Playing volleyball", "points": 10},
+        {"answer": "Surfing", "points": 8},
+        {"answer": "Reading", "points": 6},
+        {"answer": "Walking", "points": 4},
+        {"answer": "Collecting shells", "points": 2}
+      ]
+    },
+    {
+      "question": "Name a common pizza topping",
+      "answers": [
+        {"answer": "Pepperoni", "points": 35},
+        {"answer": "Cheese", "points": 25},
+        {"answer": "Sausage", "points": 15},
+        {"answer": "Mushrooms", "points": 10},
+        {"answer": "Peppers", "points": 6},
+        {"answer": "Onions", "points": 5},
+        {"answer": "Olives", "points": 3},
+        {"answer": "Pineapple", "points": 1}
+      ]
+    },
+    {
+      "question": "Name something you do before going to bed",
+      "answers": [
+        {"answer": "Brush teeth", "points": 40},
+        {"answer": "Change into pajamas", "points": 20},
+        {"answer": "Watch TV", "points": 12},
+        {"answer": "Read", "points": 10},
+        {"answer": "Set alarm", "points": 8},
+        {"answer": "Shower", "points": 5},
+        {"answer": "Pray", "points": 3},
+        {"answer": "Check phone", "points": 2}
+      ]
+    },
+    {
+      "question": "Name a popular breakfast food",
+      "answers": [
+        {"answer": "Eggs", "points": 30},
+        {"answer": "Cereal", "points": 25},
+        {"answer": "Toast", "points": 15},
+        {"answer": "Bacon", "points": 12},
+        {"answer": "Pancakes", "points": 8},
+        {"answer": "Coffee", "points": 5},
+        {"answer": "Oatmeal", "points": 3},
+        {"answer": "Fruit", "points": 2}
+      ]
+    },
+    {
+      "question": "Name something you might find in a garage",
+      "answers": [
+        {"answer": "Car", "points": 35},
+        {"answer": "Tools", "points": 25},
+        {"answer": "Lawn mower", "points": 15},
+        {"answer": "Bicycle", "points": 10},
+        {"answer": "Storage boxes", "points": 7},
+        {"answer": "Workbench", "points": 5},
+        {"answer": "Paint", "points": 2},
+        {"answer": "Ladder", "points": 1}
+      ]
+    },
+    {
+      "question": "Name a reason people call in sick to work",
+      "answers": [
+        {"answer": "Flu/Cold", "points": 35},
+        {"answer": "Stomach bug", "points": 20},
+        {"answer": "Headache", "points": 15},
+        {"answer": "Doctor appointment", "points": 10},
+        {"answer": "Fever", "points": 8},
+        {"answer": "Back pain", "points": 7},
+        {"answer": "Family emergency", "points": 3},
+        {"answer": "Food poisoning", "points": 2}
+      ]
+    },
+    {
+      "question": "Name something you'd find at a movie theater",
+      "answers": [
+        {"answer": "Popcorn", "points": 35},
+        {"answer": "Screen", "points": 20},
+        {"answer": "Seats", "points": 15},
+        {"answer": "Candy", "points": 10},
+        {"answer": "Soda/Drinks", "points": 8},
+        {"answer": "Tickets", "points": 7},
+        {"answer": "Previews/Trailers", "points": 3},
+        {"answer": "Restrooms", "points": 2}
+      ]
+    },
+    {
+      "question": "Name a popular smartphone app",
+      "answers": [
+        {"answer": "Facebook", "points": 25},
+        {"answer": "Instagram", "points": 20},
+        {"answer": "TikTok", "points": 18},
+        {"answer": "WhatsApp", "points": 12},
+        {"answer": "YouTube", "points": 10},
+        {"answer": "Twitter/X", "points": 8},
+        {"answer": "Snapchat", "points": 5},
+        {"answer": "Gmail", "points": 2}
+      ]
+    }
+  ]
+}
