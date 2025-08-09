@@ -23,7 +23,7 @@
                 Round <span id="question-number">1</span> of <span id="total-questions">?</span>
             </div>
             <h2 id="question-display" style="color: #ffd700; margin-bottom: 0;">Round <span id="round-number">1</span></h2>
-            <!--<p id="question-prompt" style="color: #74b9ff; margin-bottom: 10px;">Click "Reveal Question" to show the survey question</p>-->
+            <p id="question-prompt" style="color: #74b9ff; margin-bottom: 10px;">Click "Reveal Question" to show the survey question</p>
         </div>
 
         <!-- Answer Board -->
@@ -130,7 +130,7 @@
         <div id="question-text-overlay" style="font-size: 4rem; color: #ffd700; text-align: center; 
              padding: 40px; max-width: 90%; text-shadow: 3px 3px 6px rgba(0,0,0,0.7); 
              line-height: 1.3; font-weight: bold;">
-            {{ game.question }}
+            <!-- Question will be populated when revealed -->
         </div>
     </div>
 </div>
@@ -211,13 +211,20 @@ async function loadGameData() {
             await restoreRevealedAnswers(data.revealed_answer_ids);
         }
         
-        // Check if question was already revealed
+        // Check if question was already revealed (after refresh)
         if (data.question_revealed && data.game && data.game.question) {
             // Question was revealed, show it
             document.getElementById('question-display').textContent = data.game.question;
             const prompt = document.getElementById('question-prompt');
             if (prompt) {
                 prompt.style.display = 'none';
+            }
+        } else {
+            // Question not revealed yet, ensure prompt is shown
+            document.getElementById('question-display').textContent = `Round ${data.question_number || 1}`;
+            const prompt = document.getElementById('question-prompt');
+            if (prompt) {
+                prompt.style.display = 'block';
             }
         }
         
@@ -656,7 +663,7 @@ function resetRound() {
     }
     
     // Reset question display
-    document.getElementById('question-display').textContent = 'Question Ready';
+    document.getElementById('question-display').textContent = `Round ${gameData.question_number || 1}`;
     const prompt = document.getElementById('question-prompt');
     if (prompt) {
         prompt.style.display = 'block';
@@ -718,6 +725,11 @@ function showMessage(message, type) {
 // Question overlay functions
 function revealQuestion() {
     const overlay = document.getElementById('question-overlay');
+    
+    // Populate the question text in the overlay
+    if (gameData && gameData.game && gameData.game.question) {
+        document.getElementById('question-text-overlay').textContent = gameData.game.question;
+    }
     
     // Show overlay with fade in
     overlay.style.display = 'block';

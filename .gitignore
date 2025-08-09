@@ -3,3 +3,4 @@ venv/
 /family_feud.db
 feet_feud.db
 .mypy_cache/
+live_data.json
